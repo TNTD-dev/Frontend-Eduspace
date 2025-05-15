@@ -2,48 +2,13 @@ import { useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import TaskItem from "@/components/TaskItem"
+import { tasksByDate } from "@/data/mock/taskData"
+import { getTasksForDate } from "@/utils/taskUtils"
 
-// Sample task data
-const tasksByDate = {
-  "2024-08-13": [
-    {
-      id: 1,
-      title: "Landing Page Design",
-      time: "08:00 AM",
-      category: "Web Design",
-      icon: "📝",
-    },
-    {
-      id: 2,
-      title: "3D Icon Design",
-      time: "09:00 AM",
-      category: "3D Modeling",
-      icon: "🔮",
-    },
-  ],
-  "2024-08-11": [
-    {
-      id: 3,
-      title: "Frontend Development",
-      time: "10:00 AM",
-      category: "Software",
-      icon: "👥",
-    },
-  ],
-  "2024-08-15": [
-    {
-      id: 4,
-      title: "UI Design Review",
-      time: "02:00 PM",
-      category: "Design",
-      icon: "🎨",
-    },
-  ],
-}
 
 export default function CalendarCard() {
-  const [currentMonth, setCurrentMonth] = useState(new Date(2024, 7)) // August 2024
-  const [selectedDate, setSelectedDate] = useState("2024-08-13") // Default selected date
+  const [currentMonth, setCurrentMonth] = useState(new Date()) // Current date
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]) // Default selected date
   const [hoveredDate, setHoveredDate] = useState(null)
 
   // Get days in month
@@ -51,9 +16,11 @@ export default function CalendarCard() {
     return new Date(year, month + 1, 0).getDate()
   }
 
-  // Get day of week for first day of month (0 = Sunday, 1 = Monday, etc.)
+  // Get day of week for first day of month (1 = Monday, 2 = Tuesday, etc.)
   const getFirstDayOfMonth = (year, month) => {
-    return new Date(year, month, 1).getDay()
+    const day = new Date(year, month, 1).getDay();
+    // Convert Sunday (0) to 7, then subtract 1 to make Monday (1) the first day
+    return day === 0 ? 6 : day - 1;
   }
 
   const year = currentMonth.getFullYear()
@@ -67,8 +34,8 @@ export default function CalendarCard() {
     "July", "August", "September", "October", "November", "December",
   ]
 
-  // Day names
-  const dayNames = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+  // Day names - Changed order to start from Monday
+  const dayNames = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
 
   // Generate calendar days
   const calendarDays = []
@@ -115,10 +82,10 @@ export default function CalendarCard() {
   }
 
   // Get tasks for selected date
-  const selectedTasks = tasksByDate[selectedDate] || []
+  const selectedTasks = getTasksForDate(selectedDate)
 
   // Get tasks for hovered date
-  const hoveredTasks = hoveredDate ? tasksByDate[hoveredDate] || [] : []
+  const hoveredTasks = hoveredDate ? getTasksForDate(hoveredDate) : []
 
   // Determine which tasks to display
   const displayTasks = hoveredDate ? hoveredTasks : selectedTasks

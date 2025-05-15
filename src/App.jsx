@@ -6,6 +6,11 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import SelectRolePage from "./pages/SelectRolePage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import StudentDashboard from "./pages/StudentDashboard";
+import CoursePage from "./pages/CoursePage";
+import CourseDetail from "./pages/CourseDetail";
+import LessonDetail from "./pages/LessonDetail";
+import AssignmentDetail from "./pages/AssignmentDetail";
+import DiscussionDetail from './pages/DiscussionDetail';
 
 // Protected Route component
 const ProtectedRoute = ({ children, requiredRole }) => {
@@ -42,9 +47,12 @@ function App() {
         <Route path="/auth/register" element={<RegisterPage />} />
         <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/auth/select-role" element={<SelectRolePage />} />
-        
-
-        {/* Protected routes */}
+        <Route path="/student/courses/:courseId/lessons/:lessonId" element={<LessonDetail />} />
+        {/* Student routes */}
+        <Route path="/student/courses" element={<CoursePage />} />
+        <Route path="/student/courses/:courseId" element={<CourseDetail />} />
+        <Route path="/student/courses/:courseId/assignments/:assignmentId" element={<AssignmentDetail />} />
+        <Route path="/student/courses/:courseId/discussions/:discussionId" element={<DiscussionDetail />} />
         <Route
           path="/student/dashboard"
           element={
@@ -54,6 +62,7 @@ function App() {
           }
         />
         
+        {/* Teacher routes */}
         <Route
           path="/teacher/dashboard"
           element={
