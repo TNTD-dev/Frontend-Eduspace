@@ -11,6 +11,7 @@ import CourseDetail from "./pages/CourseDetail";
 import LessonDetail from "./pages/LessonDetail";
 import AssignmentDetail from "./pages/AssignmentDetail";
 import DiscussionDetail from './pages/DiscussionDetail';
+import Schedule from "./pages/Schedule";
 
 // Protected Route component
 const ProtectedRoute = ({ children, requiredRole }) => {
@@ -53,6 +54,7 @@ function App() {
         <Route path="/student/courses/:courseId" element={<CourseDetail />} />
         <Route path="/student/courses/:courseId/assignments/:assignmentId" element={<AssignmentDetail />} />
         <Route path="/student/courses/:courseId/discussions/:discussionId" element={<DiscussionDetail />} />
+        <Route path="/student/schedule" element={<Schedule />} />
         <Route
           path="/student/dashboard"
           element={
