@@ -12,7 +12,9 @@ import LessonDetail from "./pages/LessonDetail";
 import AssignmentDetail from "./pages/AssignmentDetail";
 import DiscussionDetail from './pages/DiscussionDetail';
 import Schedule from "./pages/Schedule";
-
+import FlashCard from "./pages/FlashCards";
+import CreateCards from "./pages/CreateCards";
+import Study from "./pages/Study";
 // Protected Route component
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, userRole } = useAuth();
@@ -55,6 +57,11 @@ function App() {
         <Route path="/student/courses/:courseId/assignments/:assignmentId" element={<AssignmentDetail />} />
         <Route path="/student/courses/:courseId/discussions/:discussionId" element={<DiscussionDetail />} />
         <Route path="/student/schedule" element={<Schedule />} />
+        <Route path="/student/flashcards" element={<FlashCard />} />
+        <Route path="/student/flashcards/create-card" element={<CreateCards />} />
+        <Route path="/student/flashcards/study" element={<Study />} />
+        
+
         <Route
           path="/student/dashboard"
           element={
