@@ -5,17 +5,17 @@ import { mockCards } from "../data/mock/cardData";
 import { mockDecks } from "../data/mock/deckData";
 import CircularProgress from "../components/CircularProgress";
 import SpacedRepetitionChart from "../components/SpacedRepetitionChart";
-import { 
-  PlusCircle, 
-  FolderPlus, 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  Edit, 
-  Trash2, 
-  BookOpen, 
-  Clock, 
-  Tag 
+import {
+  PlusCircle,
+  FolderPlus,
+  Search,
+  Filter,
+  MoreVertical,
+  Edit,
+  Trash2,
+  BookOpen,
+  Clock,
+  Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -162,23 +162,24 @@ export default function FlashCards() {
 
   // Handle starting study session
   const handleStartStudy = (deckId) => {
-    const cardsToStudy = cards.filter(card => 
-      (card.status === "due" || card.status === "new") && 
-      (!deckId || card.deckId === deckId)
+    const cardsToStudy = cards.filter(
+      (card) =>
+        (card.status === "due" || card.status === "new") &&
+        (!deckId || card.deckId === deckId)
     );
-    
+
     if (cardsToStudy.length === 0) {
       return;
     }
 
-    const deckName = deckId ? decks.find(d => d.id === deckId)?.name : null;
-    
-    navigate('/student/flashcards/study', {
+    const deckName = deckId ? decks.find((d) => d.id === deckId)?.name : null;
+
+    navigate("/student/flashcards/study", {
       state: {
         cards: cardsToStudy,
         deckId,
-        deckName
-      }
+        deckName,
+      },
     });
   };
 
@@ -307,12 +308,14 @@ export default function FlashCards() {
             <div className="mt-8 bg-white shadow rounded-lg p-6">
               <div className="flex justify-between items-center mb-4">
                 <div>
-                  <h2 className="text-xl font-semibold text-[#303345]">Today's Review</h2>
+                  <h2 className="text-xl font-semibold text-[#303345]">
+                    Today's Review
+                  </h2>
                   <p className="text-sm text-gray-500 mt-1">
                     {dueCards} cards due for review today
                   </p>
                 </div>
-                <Button 
+                <Button
                   className="bg-blue-500 hover:bg-blue-600"
                   onClick={() => handleStartStudy(null)}
                   disabled={dueCards === 0}
@@ -322,14 +325,20 @@ export default function FlashCards() {
               </div>
 
               <ReviewCards
-                cards={cards.filter(card => card.status === "due" || card.status === "new")}
+                cards={cards.filter(
+                  (card) => card.status === "due" || card.status === "new"
+                )}
                 onStartReview={handleStartStudy}
                 onDeleteCard={handleDeleteCard}
               />
             </div>
 
             {/* Decks and Cards Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-8">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full mt-8"
+            >
               <div className="flex justify-between items-center mb-4">
                 <TabsList>
                   <TabsTrigger value="decks" className="px-6">
@@ -366,7 +375,11 @@ export default function FlashCards() {
                           <CardTitle className="text-xl">{deck.name}</CardTitle>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                              >
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -375,7 +388,10 @@ export default function FlashCards() {
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDeleteDeck(deck.id)} className="text-red-500">
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteDeck(deck.id)}
+                                className="text-red-500"
+                              >
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Delete
                               </DropdownMenuItem>
@@ -393,9 +409,13 @@ export default function FlashCards() {
                         <div className="flex justify-between text-sm">
                           <div className="flex items-center gap-1">
                             <Clock className="h-3.5 w-3.5 text-amber-500" />
-                            <span className="text-amber-500 font-medium">{deck.dueCount} due</span>
+                            <span className="text-amber-500 font-medium">
+                              {deck.dueCount} due
+                            </span>
                           </div>
-                          <div className="text-gray-500">Last studied: {deck.lastStudied}</div>
+                          <div className="text-gray-500">
+                            Last studied: {deck.lastStudied}
+                          </div>
                         </div>
                       </CardContent>
                       <CardFooter className="flex justify-between pt-2">
@@ -403,8 +423,8 @@ export default function FlashCards() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            setSelectedDeckId(deck.id)
-                            setActiveTab("cards")
+                            setSelectedDeckId(deck.id);
+                            setActiveTab("cards");
                           }}
                         >
                           View Cards
@@ -443,7 +463,10 @@ export default function FlashCards() {
                       size="sm"
                       className="bg-blue-500 hover:bg-blue-600 ml-auto"
                       onClick={() => handleStartStudy(selectedDeckId)}
-                      disabled={decks.find((d) => d.id === selectedDeckId)?.cardCount === 0}
+                      disabled={
+                        decks.find((d) => d.id === selectedDeckId)
+                          ?.cardCount === 0
+                      }
                     >
                       Study Selected Deck
                     </Button>
@@ -453,9 +476,14 @@ export default function FlashCards() {
                 <div className="space-y-3">
                   {filteredCards.length === 0 ? (
                     <div className="text-center py-12">
-                      <p className="text-gray-500">No cards found. Create a new card or adjust your filters.</p>
-                      <Button 
-                        onClick={() => navigate("/student/flashcards/create-card")} 
+                      <p className="text-gray-500">
+                        No cards found. Create a new card or adjust your
+                        filters.
+                      </p>
+                      <Button
+                        onClick={() =>
+                          navigate("/student/flashcards/create-card")
+                        }
                         className="mt-4 bg-green-500 hover:bg-green-600"
                       >
                         <PlusCircle className="h-4 w-4 mr-2" />
@@ -474,19 +502,31 @@ export default function FlashCards() {
                                   card.status === "due"
                                     ? "bg-amber-100 text-amber-800 border-amber-200"
                                     : card.status === "learned"
-                                      ? "bg-green-100 text-green-800 border-green-200"
-                                      : "bg-blue-100 text-blue-800 border-blue-200"
+                                    ? "bg-green-100 text-green-800 border-green-200"
+                                    : "bg-blue-100 text-blue-800 border-blue-200"
                                 }`}
                               >
-                                {card.status === "due" ? "Due for review" : card.status === "learned" ? "Learned" : "New"}
+                                {card.status === "due"
+                                  ? "Due for review"
+                                  : card.status === "learned"
+                                  ? "Learned"
+                                  : "New"}
                               </Badge>
                               <Badge variant="outline" className="ml-2 mb-2">
-                                {card.type === "basic" ? "Basic" : card.type === "cloze" ? "Cloze" : "Image"}
+                                {card.type === "basic"
+                                  ? "Basic"
+                                  : card.type === "cloze"
+                                  ? "Cloze"
+                                  : "Image"}
                               </Badge>
                             </div>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                >
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -495,7 +535,10 @@ export default function FlashCards() {
                                   <Edit className="h-4 w-4 mr-2" />
                                   Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleDeleteCard(card.id)} className="text-red-500">
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteCard(card.id)}
+                                  className="text-red-500"
+                                >
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   Delete
                                 </DropdownMenuItem>
@@ -518,14 +561,16 @@ export default function FlashCards() {
                                 dangerouslySetInnerHTML={{
                                   __html: card.clozeText.replace(
                                     /\{\{([^}]+)\}\}/g,
-                                    '<span class="bg-blue-200 px-1 rounded">$1</span>',
+                                    '<span class="bg-blue-200 px-1 rounded">$1</span>'
                                   ),
                                 }}
                               ></p>
                             </div>
                           ) : (
                             <div>
-                              <h3 className="font-medium mb-1">Image Question:</h3>
+                              <h3 className="font-medium mb-1">
+                                Image Question:
+                              </h3>
                               <p>{card.question}</p>
                               {card.imageUrl && (
                                 <img
@@ -550,7 +595,9 @@ export default function FlashCards() {
                             ))}
                           </div>
                           <div className="flex items-center text-xs text-gray-500">
-                            <span className="mr-2">Interval: {card.interval} days</span>
+                            <span className="mr-2">
+                              Interval: {card.interval} days
+                            </span>
                             <span>Ease: {card.easeFactor.toFixed(1)}</span>
                           </div>
                         </CardFooter>

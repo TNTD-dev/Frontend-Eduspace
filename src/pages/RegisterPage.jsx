@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FaGoogle } from "react-icons/fa";
 import { FaFacebookF } from "react-icons/fa";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
@@ -12,12 +12,15 @@ import { GraduationCap, School, CheckCircle2 } from "lucide-react";
 import { useAuth } from '@/context/AuthContext';
 import { ColorfulDots } from '@/components/ColorfulDots';
 import { FcGoogle } from "react-icons/fc";
+import { authAPI } from '@/services/api';
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: '',
+    firstname: '',
+    lastname: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -38,12 +41,31 @@ const RegisterPage = () => {
     }
 
     try {
-      const result = await register(formData.email, formData.password, formData.fullName);
-      if (!result.success) {
-        setError(result.error);
+      // Gọi API register sử dụng authAPI
+      const response = await authAPI.register({
+        firstname: formData.firstname,
+        lastname: formData.lastname,
+        email: formData.email,
+        password: formData.password
+      });
+
+      // Xử lý response
+      if (response.data) {
+        // Lưu token nếu có
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+        }
+        // Lưu thông tin user nếu có
+        if (response.data.user) {
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+        // Chuyển hướng đến dashboard
+        navigate('/student/dashboard');
       }
     } catch (err) {
-      setError('An error occurred during registration');
+      // Xử lý lỗi từ axios
+      console.log('Error response:', err.response?.data);
+      setError(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -110,17 +132,17 @@ const RegisterPage = () => {
                   className="space-y-2"
                 >
                   <div className="flex justify-between">
-                    <label className="block text-sm font-medium text-gray-700" htmlFor="fullName">
-                      Full Name <span className="text-red-500">*</span>
+                    <label className="block text-sm font-medium text-gray-700" htmlFor="firstname">
+                      First Name <span className="text-red-500">*</span>
                     </label>
                   </div>
                   <Input
                     className="bg-white border-0"
-                    id="fullName"
-                    name="fullName"
+                    id="firstname"
+                    name="firstname"
                     type="text"
-                    placeholder="Enter your full name"
-                    value={formData.fullName}
+                    placeholder="Enter your first name"
+                    value={formData.firstname}
                     onChange={handleChange}
                     required
                   />
@@ -130,6 +152,29 @@ const RegisterPage = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.6 }}
+                  className="space-y-2"
+                >
+                  <div className="flex justify-between">
+                    <label className="block text-sm font-medium text-gray-700" htmlFor="lastname">
+                      Last Name <span className="text-red-500">*</span>
+                    </label>
+                  </div>
+                  <Input
+                    className="bg-white border-0"
+                    id="lastname"
+                    name="lastname"
+                    type="text"
+                    placeholder="Enter your last name"
+                    value={formData.lastname}
+                    onChange={handleChange}
+                    required
+                  />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.7 }}
                   className="space-y-2"
                 >
                   <div className="flex justify-between">
@@ -152,7 +197,7 @@ const RegisterPage = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.7 }}
+                  transition={{ duration: 0.3, delay: 0.8 }}
                   className="space-y-2"
                 >
                   <div className="flex justify-between">
@@ -184,7 +229,7 @@ const RegisterPage = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.8 }}
+                  transition={{ duration: 0.3, delay: 0.9 }}
                   className="space-y-2"
                 >
                   <div className="flex justify-between">

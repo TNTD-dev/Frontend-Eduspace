@@ -14,7 +14,7 @@ import DiscussionDetail from './pages/DiscussionDetail';
 import Schedule from "./pages/Schedule";
 import FlashCard from "./pages/FlashCards";
 import CreateCards from "./pages/CreateCards";
-import Study from "./pages/Study";
+import Study from "./pages/StudyFlashCard";
 // Protected Route component
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, userRole } = useAuth();

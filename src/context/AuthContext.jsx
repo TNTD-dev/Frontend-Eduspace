@@ -1,31 +1,18 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '@/api/authService';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Check for existing auth on mount
-    const currentUser = authService.getCurrentUser();
-    setUser(currentUser);
-    setLoading(false);
-
-    // If user exists and it's first login, redirect to role selection
-    if (currentUser && authService.isFirstLogin()) {
-      navigate('/auth/select-role');
-    }
-  }, [navigate]);
 
   const login = async (email, password) => {
     try {
-      const { user } = await authService.login(email, password);
-      setUser(user);
-      navigate('/auth/select-role');
+      // TODO: Implement your login logic here
+      setUser({ email });
+      navigate('/dashboard');
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -34,36 +21,9 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const { user } = await authService.register(userData);
-      setUser(user);
-      navigate('/auth/select-role');
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  };
-
-  const socialLogin = async (provider) => {
-    try {
-      // Simulate social login
-      const { user } = await authService.socialLogin(provider);
-      setUser(user);
-      navigate('/auth/select-role');
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  };
-
-  const setRole = async (role) => {
-    try {
-      await authService.setUserRole(role);
-      // Redirect based on role
-      if (role === 'student') {
-        navigate('/student/dashboard');
-      } else if (role === 'teacher') {
-        navigate('/teacher/dashboard');
-      }
+      // TODO: Implement your registration logic here
+      setUser({ email: userData.email });
+      navigate('/dashboard');
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -71,7 +31,6 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    authService.logout();
     setUser(null);
     navigate('/auth/login');
   };
@@ -81,16 +40,13 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     register,
-    socialLogin,
-    setRole,
     logout,
-    isAuthenticated: !!user,
-    userRole: authService.getUserRole()
+    isAuthenticated: !!user
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
