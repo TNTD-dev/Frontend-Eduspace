@@ -28,7 +28,7 @@ const LoginPage = () => {
       
       if (code) {
         try {
-          const response = await authAPI.handleGoogleCallback();
+          const response = await authAPI.handleGoogleCallback(code);
           if (response.data.accessToken) {
             localStorage.setItem("token", response.data.accessToken);
             if (response.data.user) {
