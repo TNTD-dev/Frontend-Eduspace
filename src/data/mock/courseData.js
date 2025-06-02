@@ -70,6 +70,7 @@ export const currentCourses = [
     location: "Online",
     progress: 30,
     total: 100,
+    studentCount: 42,
     modules: modules
   },
   {
@@ -79,6 +80,7 @@ export const currentCourses = [
     categoryColor: "bg-[#9937fc]",
     progress: 28,
     total: 45,
+    studentCount: 58,
     image: "/cover/cover-software-engineer.jpg",
     instructor: "Duc Tran",
     description: "This course is designed to introduce students to the fundamentals of software engineering. It covers topics such as software development methodologies, programming languages, and software testing.",
