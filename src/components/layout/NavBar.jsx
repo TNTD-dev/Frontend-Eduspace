@@ -24,10 +24,10 @@ const NavBar = () => {
       <div className="flex items-center gap-2">
         <img
           src={userData.profile.avatar || "/placeholder.svg"}
-          alt={userData.profile.name}
+          alt={userData.profile.firstName + " " + userData.profile.lastName}
           className="h-8 w-8 rounded-md object-cover"
         />
-        <span className="font-medium text-[#303345]">{userData.profile.name}</span>
+        <span className="font-medium text-[#303345]">{userData.profile.firstName + " " + userData.profile.lastName}</span>
         <ChevronDown className="h-4 w-4 text-slate-400" />
       </div>
     </div>

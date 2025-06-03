@@ -63,19 +63,23 @@ const SideBarStudent = () => {
       {/* Bottom navigation */}
       <div className="border-t border-slate-200 p-4">
         <ul className="space-y-2">
-          {bottomNavItems.map((item) => (
-            <li key={item.href}>
-              <Link
-                to={item.href}
-                className={`flex items-center rounded-md px-3 py-2 transition-colors
-                ${item.label === "Log Out" ? "hover:bg-red-50 hover:text-red-600 active:bg-red-100 active:text-red-700 text-slate-600" : "text-[#77787c] hover:bg-slate-100 hover:text-[#303345]"}
-                `}
-              >
-                <item.icon className="h-5 w-5" />
-                {!isCollapsed && <span className="ml-3">{item.label}</span>}
-              </Link>
-            </li>
-          ))}
+          {bottomNavItems.map((item) => {
+            const isActive = location.pathname.startsWith(item.href)
+            return (
+              <li key={item.href} className="relative">
+                <Link
+                  to={item.href}
+                  className={`flex items-center rounded-md px-3 py-2 pl-6 transition-colors ${isActive ? "bg-blue-50 text-[#1f53f3]" : item.label === "Log Out" ? "hover:bg-red-50 hover:text-red-600 active:bg-red-100 active:text-red-700 text-slate-600" : "text-[#77787c] hover:bg-slate-100 hover:text-[#303345]"}`}
+                >
+                  {isActive && (
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 h-6 w-1 rounded bg-[#1f53f3]"></span>
+                  )}
+                  <item.icon className="h-5 w-5" />
+                  {!isCollapsed && <span className="ml-3">{item.label}</span>}
+                </Link>
+              </li>
+            )
+          })}
         </ul>
       </div>
 

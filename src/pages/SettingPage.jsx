@@ -5,33 +5,32 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
-
-const mockProfile = {
-  avatar: '/icons8-user-96.png',
-  firstName: 'Oleg',
-  lastName: 'Rakovski',
-  email: 'olegrakovski@gmail.com',
-  phone: '+38 098 537 09 59',
-  dateOfBirth: '1995-01-16',
-  city: 'Odessa, Odessa region, Ukraine',
-  gender: 'male',
-}
+import { userData } from '@/data/mock/userData'
+import { Facebook, Github, CircleUser, Mail, Bell, Globe, MapPin, User, Lock, Share2, Trash2 } from 'lucide-react'
+import { FcGoogle } from "react-icons/fc"
 
 const menuItems = [
-  { label: 'Profile', icon: '👤' },
-  { label: 'Confidentiality', icon: '🔒' },
-  { label: 'Social network', icon: '🌐' },
-  { label: 'Payment', icon: '💳' },
-  { label: 'Notifications', icon: '🔔' },
-  { label: 'Language and region', icon: '🌍' },
-  { label: 'Ask a Question', icon: '❓' },
-  { label: 'Information', icon: 'ℹ️' },
+  { label: 'Profile', icon: <User className="w-5 h-5" /> },
+  { label: 'Confidentiality', icon: <Lock className="w-5 h-5" /> },
+  { label: 'Social network', icon: <Share2 className="w-5 h-5" /> },
+  { label: 'Notifications', icon: <Bell className="w-5 h-5" /> },
+  { label: 'Language and region', icon: <Globe className="w-5 h-5" /> },
+  { label: 'Delete Account', icon: <Trash2 className="w-5 h-5" /> },
 ]
 
 const SettingPage = () => {
-  const [profile, setProfile] = useState(mockProfile)
+  const [profile, setProfile] = useState(userData.profile)
   const [selectedTab, setSelectedTab] = useState(0)
   const fileInputRef = useRef(null)
+  const [linkedAccounts, setLinkedAccounts] = useState({
+    google: false,
+    facebook: true,
+    github: false,
+  });
+  const [notifications, setNotifications] = useState({
+    email: true,
+    web: false,
+  });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -57,13 +56,21 @@ const SettingPage = () => {
     }
   }
 
+  const handleToggleLink = (provider) => {
+    setLinkedAccounts((prev) => ({ ...prev, [provider]: !prev[provider] }));
+  };
+
+  const handleToggleNotification = (type) => {
+    setNotifications((prev) => ({ ...prev, [type]: !prev[type] }));
+  };
+
   // Nội dung từng tab
   const renderTabContent = () => {
     switch (selectedTab) {
       case 0:
         return (
           <>
-            <h2 className="text-2xl font-semibold mb-2">Profile Settings</h2>
+            <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2 text-blue-600"><User className="w-6 h-6 text-blue-600" /> Profile</h2>
             <div className="flex gap-8 items-start flex-wrap">
               {/* Avatar */}
               <div className="flex flex-col items-center gap-2 min-w-[120px]">
@@ -87,37 +94,64 @@ const SettingPage = () => {
               <form className="flex-1 grid grid-cols-2 gap-6">
                 <div>
                   <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" name="firstName" value={profile.firstName} className="mt-1" onChange={handleInputChange} />
+                  <Input id="firstName" name="firstName" value={profile.firstName} className="mt-1 bg-white w-full border-0" onChange={handleInputChange} />
                 </div>
                 <div>
                   <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" name="lastName" value={profile.lastName} className="mt-1" onChange={handleInputChange} />
+                  <Input id="lastName" name="lastName" value={profile.lastName} className="mt-1 bg-white w-full border-0" onChange={handleInputChange} />
                 </div>
                 <div>
                   <Label htmlFor="email">E-mail</Label>
-                  <Input id="email" name="email" value={profile.email} className="mt-1" onChange={handleInputChange} />
+                  <Input id="email" name="email" value={profile.email} className="mt-1 bg-white w-full border-0" onChange={handleInputChange} />
                 </div>
                 <div>
                   <Label htmlFor="phone">Phone</Label>
-                  <Input id="phone" name="phone" value={profile.phone} className="mt-1" onChange={handleInputChange} />
+                  <Input id="phone" name="phone" value={profile.phone} className="mt-1 bg-white w-full border-0" onChange={handleInputChange} />
                 </div>
                 <div>
                   <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                  <Input id="dateOfBirth" name="dateOfBirth" type="date" value={profile.dateOfBirth} className="mt-1" onChange={handleInputChange} />
+                  <Input
+                    id="dateOfBirth"
+                    name="dateOfBirth"
+                    type="date"
+                    value={profile.dateOfBirth}
+                    className="mt-1 bg-white w-full border-0"
+                    onChange={handleInputChange}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="city">City</Label>
-                  <Input id="city" name="city" value={profile.city} className="mt-1" onChange={handleInputChange} />
+                  <Input id="city" name="city" value={profile.city} className="mt-1 bg-white w-full border-0" onChange={handleInputChange} />
                 </div>
                 <div className="col-span-2 flex gap-8 items-center mt-2">
                   <Label>Gender</Label>
                   <div className="flex gap-6">
-                    <label className="flex items-center gap-2">
-                      <input type="radio" name="gender" value="male" checked={profile.gender === 'male'} onChange={handleGenderChange} />
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="male"
+                        checked={profile.gender === 'male'}
+                        onChange={handleGenderChange}
+                        className="sr-only"
+                      />
+                      <span className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors bg-white ${profile.gender === 'male' ? 'border-blue-600' : 'border-blue-300'}`}>
+                        {profile.gender === 'male' && <span className="w-4 h-4 rounded bg-blue-600 block"></span>}
+                      </span>
                       <span>male</span>
                     </label>
-                    <label className="flex items-center gap-2">
-                      <input type="radio" name="gender" value="female" checked={profile.gender === 'female'} onChange={handleGenderChange} />
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="female"
+                        checked={profile.gender === 'female'}
+                        onChange={handleGenderChange}
+                        className="sr-only"
+                      />
+                      <span className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors bg-white ${profile.gender === 'female' ? 'border-blue-600' : 'border-blue-300'}`}>
+                        {profile.gender === 'female' && <span className="w-4 h-4 rounded bg-blue-600 block"></span>}
+                      </span>
                       <span>female</span>
                     </label>
                   </div>
@@ -126,13 +160,190 @@ const SettingPage = () => {
             </div>
           </>
         )
-      default:
+      case 1:
+        // Confidentiality
         return (
-          <div className="flex flex-col gap-4">
-            <h2 className="text-2xl font-semibold mb-2">{menuItems[selectedTab].label}</h2>
-            <div className="text-gray-500">This is the <b>{menuItems[selectedTab].label}</b> settings tab. (Mock content)</div>
+          <div className="max-w-lg w-full flex flex-col gap-6">
+            <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2 text-blue-600"><Lock className="w-6 h-6 text-blue-600" /> Confidentiality</h2>
+            <form className="flex flex-col gap-4">
+              <div>
+                <Label htmlFor="oldPassword">Old Password</Label>
+                <Input id="oldPassword" name="oldPassword" type="password" className="mt-1 bg-white w-full border-0" />
+              </div>
+              <div>
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input id="newPassword" name="newPassword" type="password" className="mt-1 bg-white w-full border-0" />
+              </div>
+              <div>
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Input id="confirmPassword" name="confirmPassword" type="password" className="mt-1 bg-white w-full border-0" />
+              </div>
+              <Button type="submit" className="w-fit bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg mt-2 shadow">Save</Button>
+            </form>
+            
           </div>
         )
+      case 2:
+        // Social network
+        return (
+          <div className="max-w-lg w-full flex flex-col gap-6">
+            <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2 text-blue-600"><Share2 className="w-6 h-6 text-blue-600" /> Social network</h2>
+            <div className="flex flex-col gap-4">
+              {/* Google */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-white shadow-sm">
+                <span className="flex items-center gap-2">
+                  <FcGoogle className="w-6 h-6 text-red-500" />
+                  Google
+                </span>
+                {linkedAccounts.google ? (
+                  <Button size="sm" variant="outline" className="border-green-500 text-green-600 hover:bg-green-50" onClick={() => handleToggleLink('google')}>
+                    Unlink
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50" onClick={() => handleToggleLink('google')}>
+                    Link
+                  </Button>
+                )}
+              </div>
+              {/* Facebook */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-white shadow-sm">
+                <span className="flex items-center gap-2">
+                  <Facebook className="w-6 h-6 text-blue-600" />
+                  Facebook
+                </span>
+                {linkedAccounts.facebook ? (
+                  <Button size="sm" variant="outline" className="border-green-500 text-green-600 hover:bg-green-50" onClick={() => handleToggleLink('facebook')}>
+                    Unlink
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50" onClick={() => handleToggleLink('facebook')}>
+                    Link
+                  </Button>
+                )}
+              </div>
+              {/* Github */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-white shadow-sm">
+                <span className="flex items-center gap-2">
+                  <Github className="w-6 h-6 text-gray-800" />
+                  Github
+                </span>
+                {linkedAccounts.github ? (
+                  <Button size="sm" variant="outline" className="border-green-500 text-green-600 hover:bg-green-50" onClick={() => handleToggleLink('github')}>
+                    Unlink
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50" onClick={() => handleToggleLink('github')}>
+                    Link
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      case 3:
+        // Notifications
+        return (
+          <div className="max-w-lg w-full flex flex-col gap-6">
+            <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2 text-blue-600"><Bell className="w-6 h-6 text-blue-600" /> Notifications</h2>
+            <div className="flex flex-col gap-6">
+              {/* Email notification */}
+              <div className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm">
+                <Mail className="w-6 h-6 text-blue-500" />
+                <div className="flex-1">
+                  <div className="font-medium">Email notifications</div>
+                  <div className="text-gray-400 text-sm">Get important updates via email.</div>
+                </div>
+                <button
+                  type="button"
+                  className="flex items-center gap-3 cursor-pointer"
+                  onClick={() => handleToggleNotification('email')}
+                >
+                  <span className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors bg-white ${notifications.email ? 'border-blue-600' : 'border-blue-300'}`}>
+                    {notifications.email && <span className="w-4 h-4 rounded bg-blue-600 block"></span>}
+                  </span>
+                </button>
+              </div>
+              {/* Web notification */}
+              <div className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm">
+                <Bell className="w-6 h-6 text-blue-500" />
+                <div className="flex-1">
+                  <div className="font-medium">Web notifications</div>
+                  <div className="text-gray-400 text-sm">Receive notifications directly on the website.</div>
+                </div>
+                <button
+                  type="button"
+                  className="flex items-center gap-3 cursor-pointer"
+                  onClick={() => handleToggleNotification('web')}
+                >
+                  <span className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors bg-white ${notifications.web ? 'border-blue-600' : 'border-blue-300'}`}>
+                    {notifications.web && <span className="w-4 h-4 rounded bg-blue-600 block"></span>}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      case 4:
+        // Language and region
+        return (
+          <div className="max-w-lg w-full flex flex-col gap-6">
+            <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2 text-blue-600"><Globe className="w-6 h-6 text-blue-600" /> Language and region</h2>
+            <div className="flex flex-col gap-6">
+              {/* Language */}
+              <div className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm">
+                <Globe className="w-6 h-6 text-blue-500" />
+                <div className="flex-1">
+                  <div className="font-medium">Language</div>
+                  <div className="text-gray-400 text-sm">Choose your preferred language for the interface.</div>
+                </div>
+                <select id="language" className="bg-blue-50 border border-blue-200 rounded-lg p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none">
+                  <option>English</option>
+                  <option>Vietnamese</option>
+                  <option>Japanese</option>
+                </select>
+              </div>
+              {/* Region */}
+              <div className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm">
+                <MapPin className="w-6 h-6 text-blue-500" />
+                <div className="flex-1">
+                  <div className="font-medium">Region</div>
+                  <div className="text-gray-400 text-sm">Set your time zone and region for accurate time display.</div>
+                </div>
+                <select id="region" className="bg-blue-50 border border-blue-200 rounded-lg p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none">
+                  <option>Asia/Ho_Chi_Minh</option>
+                  <option>Asia/Tokyo</option>
+                  <option>Europe/London</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )
+      case 5:
+        // Delete Account
+        return (
+          <div className="max-w-lg w-full flex flex-col gap-6">
+            <h2 className="text-2xl font-semibold mb-2 text-red-600 flex items-center gap-2"><Trash2 className="w-6 h-6 text-red-600" /> Delete Account</h2>
+            <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
+              <div className="font-semibold mb-1">Warning!</div>
+              <div>
+                Deleting your account is <b>permanent</b> and cannot be undone.<br />
+                All your data will be lost. Please be sure before you continue.
+              </div>
+            </div>
+            <button
+              className="mt-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg px-6 py-2 shadow transition"
+              onClick={() => {
+                if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                  alert('Your account would be deleted (mock).');
+                }
+              }}
+            >
+              Delete Account
+            </button>
+          </div>
+        )
+      default:
+        return null
     }
   }
 
@@ -143,25 +354,29 @@ const SettingPage = () => {
         <div className="flex-1 overflow-auto">
           <div className="mx-auto max-w-7xl px-4 py-6">
             <NavBar />
+
+            <div className="mb-8">
+                  <h1 className="text-2xl font-bold text-[#303345]">Settings</h1>
+                </div>
             <div className="flex gap-8 mt-4">
               {/* Sidebar menu */}
               <div className="w-64 bg-white rounded-xl shadow-sm p-4 flex flex-col gap-2">
                 {menuItems.map((item, idx) => (
                   <button
                     key={item.label}
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg text-left text-base font-medium hover:bg-blue-50 transition-colors ${selectedTab === idx ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg text-left text-base  hover:bg-blue-50 transition-colors ${selectedTab === idx ? 'bg-blue-50 text-blue-600' : 'text-gray-400'}`}
                     onClick={() => setSelectedTab(idx)}
                     type="button"
                   >
-                    <span className="text-xl">{item.icon}</span>
-                    {item.label}
+                    <span className={selectedTab === idx ? 'text-blue-600' : 'text-gray-400'}>{item.icon}</span>
+                    <span className={selectedTab === idx ? 'text-blue-600' : 'text-gray-400'}>{item.label}</span>
                   </button>
                 ))}
               </div>
               {/* Main content */}
-              <Card className="flex-1 p-8 flex flex-col gap-8 min-h-[500px]">
+              <div className="flex-1 p-8 flex flex-col gap-8 min-h-[500px]">
                 {renderTabContent()}
-              </Card>
+              </div>
             </div>
           </div>
         </div>
