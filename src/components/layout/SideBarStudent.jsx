@@ -12,7 +12,7 @@ const SideBarStudent = () => {
     { icon: CalendarDays, label: "Schedule", href: "/student/schedule" },
     { icon: SwatchBook, label: "FlashCards", href: "/student/flashcards" },
     { icon: Clock, label: "Pomodoro", href: "/student/pomodoro" },
-    { icon: Bot, label: "AI Assistant", href: "/student/ai-assistant" },
+    { icon: Bot, label: "AI Assistant", href: "/student/al-assistant" },
   ]
 
   const bottomNavItems = [

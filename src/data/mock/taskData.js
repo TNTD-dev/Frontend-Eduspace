@@ -12,88 +12,110 @@ export const taskCategories = {
   "Deployment": "🚀"
 }
 
-// Sample task data
-export const tasksByDate = {
-  // Current month tasks
-  "2025-05-13": [
-    {
-      id: 1,
-      title: "Landing Page Design",
-      time: "08:00 AM",
-      category: "Web Design",
-      icon: taskCategories["Web Design"],
-      description: "Design the main landing page for the new product",
-      priority: "high"
-    },
-    {
-      id: 2,
-      title: "3D Icon Design",
-      time: "09:00 AM",
-      category: "3D Modeling",
-      icon: taskCategories["3D Modeling"],
-      description: "Create 3D icons for the mobile app",
-      priority: "medium"
-    }
-  ],
-  "2025-05-14": [
-    {
-      id: 3,
-      title: "Frontend Development",
-      time: "10:00 AM",
-      category: "Development",
-      icon: taskCategories["Development"],
-      description: "Implement new features for the dashboard",
-      priority: "high"
-    }
-  ],
-  "2025-05-15": [
-    {
-      id: 4,
-      title: "UI Design Review",
-      time: "02:00 PM",
-      category: "Design",
-      icon: taskCategories["Design"],
-      description: "Review the new UI design with the team",
-      priority: "medium"
-    }
-  ],
+// Default tags for task categorization
+export const DEFAULT_TAGS = [
+  {
+    id: "study",
+    name: "Study",
+    bgColor: "bg-blue-50",
+    textColor: "text-blue-700",
+    borderColor: "border-l-blue-500",
+  },
+  {
+    id: "meeting",
+    name: "Meeting",
+    bgColor: "bg-green-50",
+    textColor: "text-green-700",
+    borderColor: "border-l-green-500",
+  },
+  {
+    id: "deadline",
+    name: "Deadline",
+    bgColor: "bg-red-50",
+    textColor: "text-red-700",
+    borderColor: "border-l-red-500",
+  },
+  {
+    id: "exam",
+    name: "Exam",
+    bgColor: "bg-purple-50",
+    textColor: "text-purple-700",
+    borderColor: "border-l-purple-500",
+  },
+  {
+    id: "personal",
+    name: "Personal",
+    bgColor: "bg-amber-50",
+    textColor: "text-amber-700",
+    borderColor: "border-l-amber-500",
+  },
+]
 
-  // Next month tasks
-  "2025-05-16": [
-    {
-      id: 5,
-      title: "Project Planning",
-      time: "09:00 AM",
-      category: "Planning",
-      icon: taskCategories["Planning"],
-      description: "Plan the next sprint goals and tasks",
-      priority: "high"
-    }
-  ],
-  "2025-05-17": [
-    {
-      id: 6,
-      title: "Team Meeting",
-      time: "11:00 AM",
-      category: "Meeting",
-      icon: taskCategories["Meeting"],
-      description: "Weekly team sync meeting",
-      priority: "medium"
-    }
-  ],
-
-  // Previous month tasks
-  "2025-05-18": [
-    {
-      id: 7,
-      title: "Code Review",
-      time: "03:00 PM",
-      category: "Review",
-      icon: taskCategories["Review"],
-      description: "Review pull requests for the main branch",
-      priority: "high"
-    }
-  ]
+// Helper function to create a date with specific time
+const createDateTime = (date, hours, minutes = 0) => {
+  const newDate = new Date(date)
+  newDate.setHours(hours, minutes, 0, 0)
+  return newDate
 }
 
-
+// Sample tasks
+export const tasks = [
+  {
+    id: "1",
+    title: "Study Software Engineering",
+    description: "Review chapter 5 and complete practice exercises",
+    date: "2025-06-01",
+    startTime: createDateTime(new Date("2025-06-01"), 10),
+    endTime: createDateTime(new Date("2025-06-01"), 12),
+    tag: "study",
+   
+  },
+  {
+    id: "2",
+    title: "Group Project Meeting",
+    description: "Discuss progress and next steps for the database project",
+    date: "2025-06-01",
+    startTime: createDateTime(new Date("2025-06-01"), 14),
+    endTime: createDateTime(new Date("2025-06-01"), 15, 30),
+    tag: "meeting",
+  },
+  {
+    id: "3",
+    title: "Assignment Deadline",
+    description: "Submit the programming assignment for Data Structures",
+    date: "2025-06-01",
+    startTime: createDateTime(new Date("2025-06-01"), 22),
+    endTime: createDateTime(new Date("2025-06-01"), 23),
+    tag: "deadline",
+  },
+  {
+    id: "4",
+    title: "Study Session: Algorithms",
+    description: "Practice sorting algorithms and complexity analysis",
+    date: "2025-05-19",
+    startTime: createDateTime(new Date("2025-05-19"), 9),
+    endTime: createDateTime(new Date("2025-05-19"), 11),
+    tag: "study",
+   
+  },
+  {
+    id: "5",
+    title: "Office Hours",
+    description: "Meet with Professor Johnson to discuss project proposal",
+    date: "2024-03-15",
+    startTime: createDateTime(new Date("2024-03-15"), 15),
+    endTime: createDateTime(new Date("2024-03-15"), 16),
+    tag: "meeting",
+  },
+  {
+    id: "6",
+    title: "Final Exam Preparation",
+    description: "Review all course materials and practice problems",
+    date: "2024-03-15",
+    startTime: createDateTime(new Date("2024-03-15"), 13),
+    endTime: createDateTime(new Date("2024-03-15"), 17),
+    tag: "exam",
+    
+  }
+]
+  

@@ -12,9 +12,15 @@ import LessonDetail from "./pages/LessonDetail";
 import AssignmentDetail from "./pages/AssignmentDetail";
 import DiscussionDetail from './pages/DiscussionDetail';
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
-
-// Protected Route component
-const ProtectedRoute = ({ children, requiredRole }) => {
+import Schedule from "./pages/Schedule";
+import FlashCard from "./pages/FlashCards";
+import CreateCards from "./pages/CreateCards";
+import Study from "./pages/StudyFlashCard";
+import GoogleSuccess from "./pages/GoogleSuccess";
+import PomodoroPage from "./pages/PomodoroPage";
+import AlAssistantPage from "./pages/AlAssistantPage";
+  // Protected Route component
+  const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, userRole } = useAuth();
 
   if (!isAuthenticated) {
@@ -49,6 +55,14 @@ function App() {
         <Route path="/student/courses/:courseId" element={<CourseDetail />} />
         <Route path="/student/courses/:courseId/assignments/:assignmentId" element={<AssignmentDetail />} />
         <Route path="/student/courses/:courseId/discussions/:discussionId" element={<DiscussionDetail />} />
+        <Route path="/student/schedule" element={<Schedule />} />
+        <Route path="/student/flashcards" element={<FlashCard />} />
+        <Route path="/student/flashcards/create-card" element={<CreateCards />} />
+        <Route path="/student/flashcards/study" element={<Study />} />
+        <Route path="/auth/google/success" element={<GoogleSuccess />} />
+        <Route path="/student/pomodoro" element={<PomodoroPage />} />
+        <Route path="/student/al-assistant" element={<AlAssistantPage />} />
+
         <Route
           path="/student/dashboard"
           element={

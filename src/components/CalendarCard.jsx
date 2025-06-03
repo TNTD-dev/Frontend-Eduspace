@@ -2,9 +2,8 @@ import { useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import TaskItem from "@/components/TaskItem"
-import { tasksByDate } from "@/data/mock/taskData"
+import { tasks } from "@/data/mock/taskData"
 import { getTasksForDate } from "@/utils/taskUtils"
-
 
 export default function CalendarCard() {
   const [currentMonth, setCurrentMonth] = useState(new Date()) // Current date
@@ -82,10 +81,10 @@ export default function CalendarCard() {
   }
 
   // Get tasks for selected date
-  const selectedTasks = getTasksForDate(selectedDate)
+  const selectedTasks = getTasksForDate(new Date(selectedDate))
 
   // Get tasks for hovered date
-  const hoveredTasks = hoveredDate ? getTasksForDate(hoveredDate) : []
+  const hoveredTasks = hoveredDate ? getTasksForDate(new Date(hoveredDate)) : []
 
   // Determine which tasks to display
   const displayTasks = hoveredDate ? hoveredTasks : selectedTasks
@@ -124,7 +123,7 @@ export default function CalendarCard() {
             }
 
             const dateString = formatDateString(day)
-            const hasTask = tasksByDate[dateString] !== undefined
+            const hasTask = tasks.some(task => task.date === dateString)
             const isSelected = dateString === selectedDate
 
             return (

@@ -17,7 +17,7 @@ const Login = () => {
     if (!result.success) {
       setError(result.error);
     }
-  };
+  };  
 
   const handleSocialLogin = async (provider) => {
     setError('');

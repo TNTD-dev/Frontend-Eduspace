@@ -13,7 +13,7 @@ export default function ActivityChart() {
     { name: 'May', activityTime: 10 },
     { name: 'Jun', activityTime: 12 },
     { name: 'Jul', activityTime: 17 },
-    { name: 'Aug', activityTime: 20 },
+    { name: 'Aug', activityTime: 20 },   
     { name: 'Sep', activityTime: 21 },
     { name: 'Oct', activityTime: 20 },
     { name: 'Nov', activityTime: 21 },
