@@ -18,6 +18,7 @@ import Study from "./pages/StudyFlashCard";
 import GoogleSuccess from "./pages/GoogleSuccess";
 import PomodoroPage from "./pages/PomodoroPage";
 import AlAssistantPage from "./pages/AlAssistantPage";
+import SettingPage from "./pages/SettingPage";
   // Protected Route component
   const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, userRole } = useAuth();
@@ -66,7 +67,7 @@ function App() {
         <Route path="/auth/google/success" element={<GoogleSuccess />} />
         <Route path="/student/pomodoro" element={<PomodoroPage />} />
         <Route path="/student/al-assistant" element={<AlAssistantPage />} />
-
+        <Route path="/auth/settings" element={<SettingPage />} />
         <Route
           path="/student/dashboard"
           element={
