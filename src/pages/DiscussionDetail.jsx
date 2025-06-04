@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MessageSquare, ThumbsUp, MoreHorizontal, Send } from 'lucide-react';
-import SideBarStudent from '../components/layout/SideBarStudent';
-import NavBar from '../components/layout/NavBar';
-import { currentCourses, completedCourses } from '../data/mock/courseData';
+import SideBarStudent from '@/components/layout/SideBarStudent';
+import NavBar from '@/components/layout/NavBar';
+import { currentCourses, completedCourses } from '@/data/mock/courseData';
 
 const DiscussionDetail = () => {
   const { courseId, discussionId } = useParams();

@@ -8,17 +8,17 @@ import {
   CalendarDays,
   SwatchBook,
 } from "lucide-react";
-import SideBarStudent from "../components/layout/SideBarStudent";
-import { CourseCard } from "../components/CourseCard";
-import CircularProgress from "../components/CircularProgress";
-import ActivityChart from "../components/ActivityChart";
+import SideBarStudent from "@/components/layout/SideBarStudent";
+import { CourseCard } from "@/components/CourseCard";
+import CircularProgress from "@/components/CircularProgress";
+import ActivityChart from "@/components/ActivityChart";
 import { Calendar } from "@/components/ui/calendar";
-import TaskItem from "../components/TaskItem";
-import CalendarCard from "../components/CalendarCard";
-import AssignmentCard from "../components/AssignmentCard";
-import NavBar from "../components/layout/NavBar";
-import { currentCourses, completedCourses } from "../data/mock/courseData";
-import { userData } from "../data/mock/userData";
+import TaskItem from "@/components/TaskItem";
+import CalendarCard from "@/components/CalendarCard";
+import AssignmentCard from "@/components/AssignmentCard";
+import NavBar from "@/components/layout/NavBar";
+import { currentCourses, completedCourses } from "@/data/mock/courseData";
+import { userData } from "@/data/mock/userData";
 
 export default function StudentDashboard() {
   const [date, setDate] = useState(new Date());

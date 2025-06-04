@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from "react";
-import SideBarStudent from "../components/layout/SideBarStudent";
-import NavBar from "../components/layout/NavBar";
-import { CourseCard, CourseCardCompleted } from "../components/CourseCard";
-import { currentCourses, completedCourses } from "../data/mock/courseData";
+import SideBarStudent from "@/components/layout/SideBarStudent";
+import NavBar from "@/components/layout/NavBar";
+import { CourseCard, CourseCardCompleted } from "@/components/CourseCard";
+import { currentCourses, completedCourses } from "@/data/mock/courseData";
 
 const CoursePage = () => {
   const [courseType, setCourseType] = useState("all");

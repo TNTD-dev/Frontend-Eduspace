@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import SideBarStudent from "../components/layout/SideBarStudent";
-import NavBar from "../components/layout/NavBar";
+import SideBarStudent from "@/components/layout/SideBarStudent";
+import NavBar from "@/components/layout/NavBar";
 import {
   addDays,
   isSameDay,

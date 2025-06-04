@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import SideBarStudent from "../components/layout/SideBarStudent";
-import NavBar from "../components/layout/NavBar";
+import SideBarStudent from "@/components/layout/SideBarStudent";
+import NavBar from "@/components/layout/NavBar";
 import {
   ArrowLeft,
   FileText,
@@ -9,7 +9,7 @@ import {
   CheckCircle,
   Play,
 } from "lucide-react";
-import { currentCourses, completedCourses } from "../data/mock/courseData";
+import { currentCourses, completedCourses } from "@/data/mock/courseData";
 
 const allCourses = [...currentCourses, ...completedCourses];
 

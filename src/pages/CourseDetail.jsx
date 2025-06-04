@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import SideBarStudent from "../components/layout/SideBarStudent";
+import SideBarStudent from "@/components/layout/SideBarStudent";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -22,9 +22,9 @@ import {
   ExternalLink,
   ThumbsUp,
 } from "lucide-react";
-import { currentCourses, completedCourses } from "../data/mock/courseData";
-import NavBar from "../components/layout/NavBar";
-import NewDiscussion from "../components/NewDiscussion";
+import { currentCourses, completedCourses } from "@/data/mock/courseData";
+import NavBar from "@/components/layout/NavBar";
+import NewDiscussion from "@/components/NewDiscussion";
 
 // Combine current and completed courses into a single array for easier course lookup
 const allCourses = [...currentCourses, ...completedCourses];

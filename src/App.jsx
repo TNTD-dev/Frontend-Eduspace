@@ -1,24 +1,24 @@
-import { Button } from "@/components/ui/button";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "@/pages/LoginPage";
+import RegisterPage from "@/pages/RegisterPage";
 import { Routes, Route, Navigate } from "react-router-dom";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import SelectRolePage from "./pages/SelectRolePage";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import StudentDashboard from "./pages/StudentDashboard";
-import CoursePage from "./pages/CoursePage";
-import CourseDetail from "./pages/CourseDetail";
-import LessonDetail from "./pages/LessonDetail";
-import AssignmentDetail from "./pages/AssignmentDetail";
-import DiscussionDetail from './pages/DiscussionDetail';
-import Schedule from "./pages/Schedule";
-import FlashCard from "./pages/FlashCards";
-import CreateCards from "./pages/CreateCards";
-import Study from "./pages/StudyFlashCard";
-import GoogleSuccess from "./pages/GoogleSuccess";
-import PomodoroPage from "./pages/PomodoroPage";
-import AlAssistantPage from "./pages/AlAssistantPage";
-import SettingPage from "./pages/SettingPage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import SelectRolePage from "@/pages/SelectRolePage";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import StudentDashboard from "@/pages/StudentDashboard";
+import CoursePage from "@/pages/CoursePage";
+import CourseDetail from "@/pages/CourseDetail";
+import LessonDetail from "@/pages/LessonDetail";
+import AssignmentDetail from "@/pages/AssignmentDetail";
+import DiscussionDetail from '@/pages/DiscussionDetail';
+import Schedule from "@/pages/Schedule";
+import FlashCard from "@/pages/FlashCards";
+import CreateCards from "@/pages/CreateCards";
+import Study from "@/pages/StudyFlashCard";
+import GoogleSuccess from "@/pages/GoogleSuccess";
+import PomodoroPage from "@/pages/PomodoroPage";
+import AlAssistantPage from "@/pages/AlAssistantPage";
+import SettingPage from "@/pages/SettingPage";
+
   // Protected Route component
   const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, userRole } = useAuth();

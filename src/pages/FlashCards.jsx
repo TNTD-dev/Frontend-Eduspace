@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import SideBarStudent from "../components/layout/SideBarStudent";
-import NavBar from "../components/layout/NavBar";
-import { mockCards } from "../data/mock/cardData";
-import { mockDecks } from "../data/mock/deckData";
-import CircularProgress from "../components/CircularProgress";
-import SpacedRepetitionChart from "../components/SpacedRepetitionChart";
+import SideBarStudent from "@/components/layout/SideBarStudent";
+import NavBar from "@/components/layout/NavBar";
+import { mockCards } from "@/data/mock/cardData";
+import { mockDecks } from "@/data/mock/deckData";
+import CircularProgress from "@/components/CircularProgress";
+import SpacedRepetitionChart from "@/components/SpacedRepetitionChart";
 import {
   PlusCircle,
   FolderPlus,

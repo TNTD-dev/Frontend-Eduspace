@@ -1,6 +1,6 @@
 import React from 'react';
 import {format, startOfWeek, endOfWeek, eachDayOfInterval, isToday} from 'date-fns';
-import {VIEW_TYPES} from '../types/schedule';
+import {VIEW_TYPES} from '@/types/schedule';
 import { cn } from '@/lib/utils';
 
 /**
