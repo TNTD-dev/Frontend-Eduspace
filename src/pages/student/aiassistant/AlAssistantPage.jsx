@@ -22,8 +22,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import DocumentInput from "@/components/DocumentInput";
-import SummaryResult from "@/components/SummaryResult";
+import DocumentInput from "@/components/features/assistant/DocumentInput";
+import SummaryResult from "@/components/features/assistant/SummaryResult";
 
 // Structure for a summary request
 const createSummaryRequest = (content, type, fileName = null) => {

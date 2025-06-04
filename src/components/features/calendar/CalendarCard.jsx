@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import TaskItem from "@/components/TaskItem"
+import TaskItem from "@/components/features/calendar/tasks/TaskItem"
 import { tasks } from "@/data/mock/taskData"
 import { getTasksForDate } from "@/utils/taskUtils"
 

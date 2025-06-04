@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import SideBarStudent from "@/components/layout/SideBarStudent";
 import NavBar from "@/components/layout/NavBar";
-import { CourseCard, CourseCardCompleted } from "@/components/CourseCard";
+import { CourseCard, CourseCardCompleted } from "@/components/features/course/CourseCard";
 import { currentCourses, completedCourses } from "@/data/mock/courseData";
 
 const CoursePage = () => {

@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { currentCourses, completedCourses } from "@/data/mock/courseData";
 import NavBar from "@/components/layout/NavBar";
-import NewDiscussion from "@/components/NewDiscussion";
+import NewDiscussion from "@/components/features/course/NewDiscussion";
 
 // Combine current and completed courses into a single array for easier course lookup
 const allCourses = [...currentCourses, ...completedCourses];

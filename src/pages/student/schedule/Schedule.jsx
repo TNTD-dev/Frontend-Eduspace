@@ -23,14 +23,14 @@ import { tasks as initialTasks, DEFAULT_TAGS } from "@/data/mock/taskData";
 import { VIEW_TYPES } from "@/types/schedule";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { CalendarHeader } from "@/components/CalendarHeader";
-import { DayView } from "@/components/DayView";
-import { WeekView } from "@/components/WeekView";
+import { CalendarHeader } from "@/components/features/calendar/CalendarHeader";
+import { DayView } from "@/components/features/calendar/views/DayView";
+import { WeekView } from "@/components/features/calendar/views/WeekView";
 import { getTasksForDate } from "@/utils/taskUtils";
-import { MonthView } from "@/components/MonthView";
-import { TaskDialog } from "@/components/TaskDialog";
-import { TaskDetail } from "@/components/TaskDetail";
-import { TagManager } from "@/components/TagManager";
+import { MonthView } from "@/components/features/calendar/views/MonthView";
+import { TaskDialog } from "@/components/features/calendar/tasks/TaskDialog";
+import { TaskDetail } from "@/components/features/calendar/tasks/TaskDetail";
+import { TagManager } from "@/components/features/calendar/tasks/TagManager";
 export default function Schedule() {
   // Current date state
   const [currentDate, setCurrentDate] = useState(new Date());

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * Calendar header component that displays the current date based on view type
- * @param {import('../types/schedule').CalendarHeaderProps} props
+ * @param {import('../../../types/schedule').CalendarHeaderProps} props
  */
 export function CalendarHeader({ currentDate, viewType }) {
   if (viewType === VIEW_TYPES.DAY) {

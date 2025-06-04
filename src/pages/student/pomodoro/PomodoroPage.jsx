@@ -12,7 +12,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { tasks as mockTasks } from "@/data/mock/taskData";
-import PomodoroSetting from "@/components/PomodoroSetting";
+import PomodoroSetting from "@/components/features/pomodoro/PomodoroSetting";
 import { format } from "date-fns";
 
 // Timer modes

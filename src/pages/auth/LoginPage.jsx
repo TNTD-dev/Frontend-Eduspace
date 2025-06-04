@@ -9,7 +9,7 @@ import { FcGoogle } from "react-icons/fc";
 import { FaFacebookF } from "react-icons/fa";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
-import { ColorfulDots } from "@/components/ColorfulDots";
+import { ColorfulDots } from "@/components/common/ColorfulDots";
 import { authAPI } from "@/services/api";
 
 const LoginPage = () => {

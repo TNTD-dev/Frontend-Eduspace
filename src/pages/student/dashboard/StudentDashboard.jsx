@@ -9,13 +9,13 @@ import {
   SwatchBook,
 } from "lucide-react";
 import SideBarStudent from "@/components/layout/SideBarStudent";
-import { CourseCard } from "@/components/CourseCard";
-import CircularProgress from "@/components/CircularProgress";
-import ActivityChart from "@/components/ActivityChart";
+import { CourseCard } from "@/components/features/course/CourseCard";
+import CircularProgress from "@/components/common/CircularProgress";
+import ActivityChart from "@/components/common/ActivityChart";
 import { Calendar } from "@/components/ui/calendar";
-import TaskItem from "@/components/TaskItem";
-import CalendarCard from "@/components/CalendarCard";
-import AssignmentCard from "@/components/AssignmentCard";
+import TaskItem from "@/components/features/calendar/tasks/TaskItem";
+import CalendarCard from "@/components/features/calendar/CalendarCard";
+import AssignmentCard from "@/components/features/course/AssignmentCard";
 import NavBar from "@/components/layout/NavBar";
 import { currentCourses, completedCourses } from "@/data/mock/courseData";
 import { userData } from "@/data/mock/userData";

@@ -3,8 +3,8 @@ import SideBarStudent from "@/components/layout/SideBarStudent";
 import NavBar from "@/components/layout/NavBar";
 import { mockCards } from "@/data/mock/cardData";
 import { mockDecks } from "@/data/mock/deckData";
-import CircularProgress from "@/components/CircularProgress";
-import SpacedRepetitionChart from "@/components/SpacedRepetitionChart";
+import CircularProgress from "@/components/common/CircularProgress";
+import SpacedRepetitionChart from "@/components/features/flashcard/SpacedRepetitionChart";
 import {
   PlusCircle,
   FolderPlus,
@@ -44,7 +44,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import ReviewCards from "@/components/ReviewCards";
+import ReviewCards from "@/components/features/flashcard/ReviewCards";
 
 export default function FlashCards() {
   const navigate = useNavigate();

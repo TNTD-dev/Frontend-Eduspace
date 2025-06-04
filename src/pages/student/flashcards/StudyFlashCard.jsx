@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import SideBarStudent from "@/components/layout/SideBarStudent";
 import NavBar from "@/components/layout/NavBar";
-import CircularProgress from "@/components/CircularProgress";
+import CircularProgress from "@/components/common/CircularProgress";
 
 const Study = () => {
   const navigate = useNavigate();

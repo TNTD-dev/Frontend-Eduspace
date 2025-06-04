@@ -1,23 +1,23 @@
-import LoginPage from "@/pages/LoginPage";
-import RegisterPage from "@/pages/RegisterPage";
+import LoginPage from "@/pages/auth/LoginPage";
+import RegisterPage from "@/pages/auth/RegisterPage";
 import { Routes, Route, Navigate } from "react-router-dom";
-import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
-import SelectRolePage from "@/pages/SelectRolePage";
+import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
+import SelectRolePage from "@/pages/auth/SelectRolePage";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import StudentDashboard from "@/pages/StudentDashboard";
-import CoursePage from "@/pages/CoursePage";
-import CourseDetail from "@/pages/CourseDetail";
-import LessonDetail from "@/pages/LessonDetail";
-import AssignmentDetail from "@/pages/AssignmentDetail";
-import DiscussionDetail from '@/pages/DiscussionDetail';
-import Schedule from "@/pages/Schedule";
-import FlashCard from "@/pages/FlashCards";
-import CreateCards from "@/pages/CreateCards";
-import Study from "@/pages/StudyFlashCard";
-import GoogleSuccess from "@/pages/GoogleSuccess";
-import PomodoroPage from "@/pages/PomodoroPage";
-import AlAssistantPage from "@/pages/AlAssistantPage";
-import SettingPage from "@/pages/SettingPage";
+import StudentDashboard from "@/pages/student/dashboard/StudentDashboard";
+import CoursePage from "@/pages/student/courses/CoursePage";
+import CourseDetail from "@/pages/student/courses/CourseDetail";
+import LessonDetail from "@/pages/student/courses/LessonDetail";
+import AssignmentDetail from "@/pages/student/courses/AssignmentDetail";
+import DiscussionDetail from '@/pages/student/courses/DiscussionDetail';
+import Schedule from "@/pages/student/schedule/Schedule";
+import FlashCard from "@/pages/student/flashcards/FlashCards";
+import CreateCards from "@/pages/student/flashcards/CreateCards";
+import Study from "@/pages/student/flashcards/StudyFlashCard";
+import GoogleSuccess from "@/pages/common/GoogleSuccess";
+import PomodoroPage from "@/pages/student/pomodoro/PomodoroPage";
+import AlAssistantPage from "@/pages/student/aiassistant/AlAssistantPage";
+import SettingPage from "@/pages/common/SettingPage";
 
   // Protected Route component
   const ProtectedRoute = ({ children, requiredRole }) => {

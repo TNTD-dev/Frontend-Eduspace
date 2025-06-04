@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Link } from 'react-router-dom';
 import { GraduationCap, School } from "lucide-react";
-import { ColorfulDots } from '@/components/ColorfulDots';
+import { ColorfulDots } from '@/components/common/ColorfulDots';
 
 const SelectRolePage = () => {
   const [selectedRole, setSelectedRole] = useState('');
