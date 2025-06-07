@@ -24,16 +24,16 @@ import { SquareLibrary } from "lucide-react";
 const CourseCard = ({ course }) => {
   const {
     id,
-    title,
-    category,
-    categoryColor,
-    progress,
-    total,
-    image,
-    instructor,
-    endDate,
-  } = course;
-  const progressPercentage = (progress / total) * 100;
+    title = '',
+    category = '',
+    categoryColor = 'bg-blue-500',
+    progress = 0,
+    total = 1,
+    image = '',
+    instructorName = '',
+    endDate = '',
+  } = course || {};
+  const progressPercentage = total > 0 ? (progress / total) * 100 : 0;
 
   return (
     <motion.div
@@ -42,44 +42,41 @@ const CourseCard = ({ course }) => {
       transition={{ duration: 0.3 }}
       className="overflow-hidden rounded-lg bg-white shadow-sm transition-all hover:shadow-md"
     >
-      <Link to={`/student/courses/${course.id}`}>
+      <Link to={`/student/courses/${id}`}>
         <div className="relative h-32 overflow-hidden">
           <img
-            src={course.image || "/placeholder.svg"}
-            alt={course.title}
+            src={image || "/placeholder.svg"}
+            alt={title}
             className="h-full w-full object-cover"
           />
           <div
-            className={`absolute left-2 top-2 rounded-md ${course.categoryColor} px-2 py-0.5 text-xs font-medium text-white`}
+            className={`absolute left-2 top-2 rounded-md ${categoryColor} px-2 py-0.5 text-xs font-medium text-white`}
           >
-            {course.category}
+            {category}
           </div>
         </div>
         <div className="p-3">
           <h3 className="mb-2 text-sm font-semibold text-[#303345] line-clamp-2">
-            {course.title}
+            {title}
           </h3>
           <div className="mb-3 flex items-center gap-1 text-xs text-slate-500">
             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-xs font-medium text-slate-600">
-              {instructor
-                .split(" ")
-                .map((name) => name[0])
-                .join("")}
+              {(instructorName || '').split(' ').map((name) => name[0]).join('')}
             </div>
-            <span>{instructor}</span>
+            <span>{instructorName}</span>
           </div>
           <div className="flex items-center justify-between text-xs text-slate-500">
             <div className="flex items-center gap-1">
               <SquareLibrary className="w-4 h-4" />
-              <span>{course.total} lessons</span>
+              <span>{total} lessons</span>
             </div>
             <span>
-              {course.progress}/{course.total}
+              {progress}/{total}
             </span>
           </div>
           <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-slate-100">
             <div
-              className={`h-full rounded-full ${course.categoryColor}`}
+              className={`h-full rounded-full ${categoryColor}`}
               style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>

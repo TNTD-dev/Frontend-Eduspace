@@ -1,26 +1,64 @@
 import React from 'react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { GraduationCap, School } from "lucide-react";
 import { ColorfulDots } from '@/components/common/ColorfulDots';
+import { authAPI } from '@/api';
+import { useAuth } from '@/context/AuthContext';
 
 const SelectRolePage = () => {
+  const {setUser} = useAuth();
   const [selectedRole, setSelectedRole] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = searchParams.get('token');
+    console.log('Token in SelectRolePage:', token);
+    if (!token) {
+      console.log('No token found, redirecting to login');
+      navigate('/auth/login');
+    }
+  }, [searchParams, navigate]);
 
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simple navigation based on role
-    if (selectedRole === 'student') {
-      window.location.href = '/auth/register/student';
-    } else if (selectedRole === 'teacher') {
-      window.location.href = '/auth/register/teacher';
-    }
+    setError('');
+    setLoading(true);
+
+    try {
+      const token = searchParams.get('token');
+      const response = await authAPI.updateRole(selectedRole, token);
+      
+      console.log('Response after role update:', response);
+      
+      if (response.success) {
+        // Lưu token và user data
+        console.log('Token to store:', response.data.token);
+        console.log('User data to store:', response.data.user);
+        console.log('Redirect URL from response:', response.data.redirectUrl);
+        
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        setUser(response.data.user);
+        // Xử lý URL chuyển hướng
+        const redirectUrl = new URL(response.data.redirectUrl);
+        console.log('Parsed pathname:', redirectUrl.pathname);
+        navigate(redirectUrl.pathname);
+      }
+    } catch (err) {
+      console.error('Error updating role:', err);
+      setError(err.response?.data?.message || 'Failed to update role');
+      setLoading(false);
+    } 
   };
 
   return (
@@ -62,6 +100,17 @@ const SelectRolePage = () => {
                 <h1 className="text-3xl font-semibold font-atyp">Select Your Role</h1>
                 <p className="text-slate-500">Choose how you want to use EduSpace</p>
               </motion.div>
+
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+                  role="alert"
+                >
+                  <span className="block sm:inline">{error}</span>
+                </motion.div>
+              )}
 
               <motion.form
                 initial={{ opacity: 0, y: 20 }}
@@ -131,9 +180,9 @@ const SelectRolePage = () => {
                   <Button
                     type="submit"
                     className="w-full py-3 text-base shadow-md hover:bg-[#071f8c] transform hover:-translate-y-0.5 bg-[#1f53f3]"
-                    disabled={!selectedRole}
+                    disabled={!selectedRole || loading}
                   >
-                    Continue
+                    {loading ? 'Processing...' : 'Continue'}
                   </Button>
                 </motion.div>
               </motion.form>

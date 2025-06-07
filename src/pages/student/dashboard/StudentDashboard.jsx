@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -17,11 +17,47 @@ import TaskItem from "@/components/features/calendar/tasks/TaskItem";
 import CalendarCard from "@/components/features/calendar/CalendarCard";
 import AssignmentCard from "@/components/features/course/AssignmentCard";
 import NavBar from "@/components/layout/NavBar";
-import { currentCourses, completedCourses } from "@/data/mock/courseData";
+import { currentCourses} from "@/data/mock/courseData";
 import { userData } from "@/data/mock/userData";
+import { userAPI } from "@/api";
+import { courseEnrollmentAPI } from "@/api";
 
 export default function StudentDashboard() {
   const [date, setDate] = useState(new Date());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [user,setUser] = useState(null);
+  const [courses, setCourses] = useState([]);
+  useEffect(() => {
+    userAPI.getProfile()
+      .then(res => {
+        setUser(res);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.response?.data?.error || "Error fetching user");
+        setLoading(false);
+      });
+
+    courseEnrollmentAPI.getMyCourses()
+      .then(res => {
+        console.log('Courses API Response:', res); // Debug log
+        // Check if response is an array
+        if (Array.isArray(res)) {
+          setCourses(res);
+        } else if (res.data && Array.isArray(res.data)) {
+          setCourses(res.data);
+        } else {
+          console.error('Invalid courses data format:', res);
+          setCourses([]);
+        }
+      })
+      .catch(err => {
+        console.error('Courses API Error:', err);
+        setError(err.response?.data?.error || "Error fetching courses");
+        setCourses([]);
+      });
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-[#f4f9fc]">
@@ -42,7 +78,7 @@ export default function StudentDashboard() {
                 <div className="mb-8">
                   <h1 className="text-2xl font-bold text-[#303345]">
                     <span className="mr-2">👋</span>
-                    Hi, {userData.profile.name}!
+                    Hi, {user?.firstName + " " + user?.lastName}!
                   </h1>
                 </div>
 
@@ -60,14 +96,18 @@ export default function StudentDashboard() {
                     </Link>
                   </div>
                   <div className="flex gap-6 overflow-x-auto pb-4">
-                    {currentCourses.slice(0, 2).map((currentCourses) => (
-                      <div
-                        key={currentCourses.id}
-                        className="min-w-[300px] flex-1"
-                      >
-                        <CourseCard course={currentCourses} />
-                      </div>
-                    ))}
+                    {courses && courses.length > 0 ? (
+                      courses.slice(0, 2).map((course) => (
+                        <div
+                          key={course.id}
+                          className="min-w-[300px] flex-1"
+                        > 
+                          <CourseCard course={course} />
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-gray-500">No courses available</div>
+                    )}
                   </div>
                 </div>
 

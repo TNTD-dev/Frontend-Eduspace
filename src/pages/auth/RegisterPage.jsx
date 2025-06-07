@@ -12,7 +12,7 @@ import { GraduationCap, School, CheckCircle2 } from "lucide-react";
 import { useAuth } from '@/context/AuthContext';
 import { ColorfulDots } from '@/components/common/ColorfulDots';
 import { FcGoogle } from "react-icons/fc";
-import { authAPI } from '@/services/api';
+import { authAPI } from '@/api';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -49,18 +49,21 @@ const RegisterPage = () => {
         password: formData.password
       });
 
+      console.log('Registration response:', response);
+
       // Xử lý response
-      if (response.data) {
-        // Lưu token nếu có
-        if (response.data.token) {
-          localStorage.setItem('token', response.data.token);
+      if (response && response.data) {
+        // Lấy token từ response
+        const { token, redirectUrl } = response.data;
+        console.log('Token received:', token);
+        
+        if (redirectUrl) {
+          // Nếu có redirectUrl, sử dụng nó
+          window.location.href = redirectUrl;
+        } else {
+          // Nếu không có redirectUrl, tự tạo URL với token
+          navigate(`/auth/select-role?token=${token}`);
         }
-        // Lưu thông tin user nếu có
-        if (response.data.user) {
-          localStorage.setItem('user', JSON.stringify(response.data.user));
-        }
-        // Chuyển hướng đến dashboard
-        navigate('/student/dashboard');
       }
     } catch (err) {
       // Xử lý lỗi từ axios

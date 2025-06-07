@@ -1,10 +1,24 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Search, Bell, ChevronDown } from 'lucide-react'
 import { userData } from '../../data/mock/userData'
+import { userAPI } from '@/api'
 
 const NavBar = () => {
     const [searchQuery, setSearchQuery] = useState("");
-    
+    const [user,setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+  useEffect(() => {
+    userAPI.getProfile()
+      .then(res => {
+        setUser(res);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.response?.data?.error || "Error fetching user");
+        setLoading(false);
+      });
+  }, []);
     return (
     <div className="mb-8 flex items-center justify-between">
     <div className="relative w-full max-w-md">
@@ -23,11 +37,11 @@ const NavBar = () => {
       </button>
       <div className="flex items-center gap-2">
         <img
-          src={userData.profile.avatar || "/placeholder.svg"}
-          alt={userData.profile.firstName + " " + userData.profile.lastName}
+          src={user?.avatar || "/placeholder.svg"}
+          alt={user?.firstName + " " + user?.lastName}
           className="h-8 w-8 rounded-md object-cover"
         />
-        <span className="font-medium text-[#303345]">{userData.profile.firstName + " " + userData.profile.lastName}</span>
+        <span className="font-medium text-[#303345]">{user?.firstName + " " + user?.lastName}</span>
         <ChevronDown className="h-4 w-4 text-slate-400" />
       </div>
     </div>

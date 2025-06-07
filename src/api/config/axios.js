@@ -1,9 +1,7 @@
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_URL;
-
 const axiosInstance = axios.create({
-  baseURL,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:4003',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -26,15 +24,22 @@ axiosInstance.interceptors.request.use(
 
 // Response interceptor
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => response.data,
   (error) => {
     if (error.response?.status === 401) {
-      // Xử lý khi token hết hạn
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Chỉ xóa token và user nếu không phải đang ở trang select-role
+      if (!window.location.pathname.includes('/auth/select-role')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        // Chỉ chuyển hướng nếu không phải đang ở trang login
+        if (!window.location.pathname.includes('/auth/login')) {
+          window.location.href = '/auth/login';
+        }
+      }
     }
     return Promise.reject(error);
   }
 );
 
-export default axiosInstance; 
+export default axiosInstance;

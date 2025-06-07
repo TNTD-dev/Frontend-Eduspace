@@ -1,50 +1,27 @@
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebookF } from "react-icons/fa";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
 import { ColorfulDots } from "@/components/common/ColorfulDots";
-import { authAPI } from "@/services/api";
+import { authAPI } from "@/api";
+
 
 const LoginPage = () => {
+  const { setUser,isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-
-  // Add useEffect to handle Google callback
-  useEffect(() => {
-    const handleGoogleCallback = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-      
-      if (code) {
-        try {
-          const response = await authAPI.handleGoogleCallback(code);
-          if (response.data.accessToken) {
-            localStorage.setItem("token", response.data.accessToken);
-            if (response.data.user) {
-              localStorage.setItem("user", JSON.stringify(response.data.user));
-            }
-            window.location.href = "/student/dashboard";
-          }
-        } catch (err) {
-          console.error("Google login error:", err);
-          setError("Failed to login with Google");
-        }
-      }
-    };
-
-    handleGoogleCallback();
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,30 +34,26 @@ const LoginPage = () => {
         password,
       });
 
-      // Kiểm tra response từ backend
-      if (response.data) {
-        // Kiểm tra nếu có lỗi
-        if (response.data.errCode !== undefined) {
-          setError(response.data.errMessage);
-          setLoading(false);
-          return;
-        }
+      console.log('Login API response:', response);
 
-        // Nếu đăng nhập thành công
-        if (response.data.accessToken) {
-          // Lưu token vào localStorage
-          localStorage.setItem("token", response.data.accessToken);
-          // Lưu thông tin user
-          if (response.data.user) {
-            localStorage.setItem("user", JSON.stringify(response.data.user));
-          }
-          // Chuyển hướng đến dashboard
-          window.location.href = "/student/dashboard";
-        }
+      if (response.accessToken && response.user) {
+        setUser(response.user);
+        localStorage.setItem("token", response.accessToken);
+        localStorage.setItem("user", JSON.stringify(response.user));
+        console.log("User role:", response.user.role);
+        console.log("Is authenticated:", isAuthenticated);
+        navigate(
+          response.user.role === "teacher"
+            ? "/teacher/dashboard"
+            : "/student/dashboard"
+        );
+      } else if (response.errMessage) {
+        setError(response.errMessage);
+      } else {
+        setError("An error occurred during login");
       }
     } catch (err) {
       console.log("Login error:", err.response?.data);
-      // Xử lý các loại lỗi khác nhau
       if (err.response?.data?.errMessage) {
         setError(err.response.data.errMessage);
       } else if (err.response?.data?.message) {

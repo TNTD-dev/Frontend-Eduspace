@@ -9,7 +9,7 @@ import CoursePage from "@/pages/student/courses/CoursePage";
 import CourseDetail from "@/pages/student/courses/CourseDetail";
 import LessonDetail from "@/pages/student/courses/LessonDetail";
 import AssignmentDetail from "@/pages/student/courses/AssignmentDetail";
-import DiscussionDetail from '@/pages/student/courses/DiscussionDetail';
+import DiscussionDetail from "@/pages/student/courses/DiscussionDetail";
 import Schedule from "@/pages/student/schedule/Schedule";
 import FlashCard from "@/pages/student/flashcards/FlashCards";
 import CreateCards from "@/pages/student/flashcards/CreateCards";
@@ -18,9 +18,12 @@ import GoogleSuccess from "@/pages/common/GoogleSuccess";
 import PomodoroPage from "@/pages/student/pomodoro/PomodoroPage";
 import AlAssistantPage from "@/pages/student/aiassistant/AlAssistantPage";
 import SettingPage from "@/pages/common/SettingPage";
+//temporary
+import SideBarStudent from "@/components/layout/SideBarStudent";
+import NavBar from "@/components/layout/NavBar";
 
-  // Protected Route component
-  const ProtectedRoute = ({ children, requiredRole }) => {
+// Protected Route component
+const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, userRole } = useAuth();
 
   if (!isAuthenticated) {
@@ -34,14 +37,21 @@ import SettingPage from "@/pages/common/SettingPage";
   return children;
 };
 
-// Student Dashboard placeholder
-
-// Teacher Dashboard placeholder
+// Demo Teacher Dashboard placeholder
 const TeacherDashboard = () => (
-  <div className="p-8">
-    <h1 className="text-2xl font-bold">Teacher Dashboard</h1>
-    <p>Welcome to your teacher dashboard!</p>
-  </div>
+  <div className="flex min-h-screen bg-[#f4f9fc]">
+      <SideBarStudent />
+  <div className="flex-1 flex flex-col h-screen">
+  <div className="flex-1 overflow-auto">
+    <div className="mx-auto max-w-7xl px-4 py-6">
+      {/* Header */}
+      <NavBar />
+      <h1>Teacher Dashboard</h1>
+      </div>
+      </div>
+      </div>
+      </div>
+      
 );
 
 function App() {
@@ -54,15 +64,27 @@ function App() {
         <Route path="/auth/register" element={<RegisterPage />} />
         <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/auth/select-role" element={<SelectRolePage />} />
-        <Route path="/student/courses/:courseId/lessons/:lessonId" element={<LessonDetail />} />
+        <Route
+          path="/student/courses/:courseId/lessons/:lessonId"
+          element={<LessonDetail />}
+        />
         {/* Student routes */}
         <Route path="/student/courses" element={<CoursePage />} />
         <Route path="/student/courses/:courseId" element={<CourseDetail />} />
-        <Route path="/student/courses/:courseId/assignments/:assignmentId" element={<AssignmentDetail />} />
-        <Route path="/student/courses/:courseId/discussions/:discussionId" element={<DiscussionDetail />} />
+        <Route
+          path="/student/courses/:courseId/assignments/:assignmentId"
+          element={<AssignmentDetail />}
+        />
+        <Route
+          path="/student/courses/:courseId/discussions/:discussionId"
+          element={<DiscussionDetail />}
+        />
         <Route path="/student/schedule" element={<Schedule />} />
         <Route path="/student/flashcards" element={<FlashCard />} />
-        <Route path="/student/flashcards/create-card" element={<CreateCards />} />
+        <Route
+          path="/student/flashcards/create-card"
+          element={<CreateCards />}
+        />
         <Route path="/student/flashcards/study" element={<Study />} />
         <Route path="/auth/google/success" element={<GoogleSuccess />} />
         <Route path="/student/pomodoro" element={<PomodoroPage />} />
@@ -71,12 +93,12 @@ function App() {
         <Route
           path="/student/dashboard"
           element={
-            // <ProtectedRoute requiredRole="student">
+            <ProtectedRoute requiredRole="student">
               <StudentDashboard />
-          // </ProtectedRoute>
+            </ProtectedRoute>
           }
         />
-        
+
         {/* Teacher routes */}
         <Route
           path="/teacher/dashboard"
