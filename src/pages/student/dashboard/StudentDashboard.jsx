@@ -29,9 +29,9 @@ export default function StudentDashboard() {
   const [user,setUser] = useState(null);
   const [courses, setCourses] = useState([]);
   useEffect(() => {
-    userAPI.getProfile()
+    userAPI.getUser()
       .then(res => {
-        setUser(res);
+        setUser(res.data);
         setLoading(false);
       })
       .catch(err => {

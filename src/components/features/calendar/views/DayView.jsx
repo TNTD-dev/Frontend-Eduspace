@@ -155,23 +155,24 @@ export function DayView({
 
         {/* Render tasks */}
         {tasks
-          .filter(task => task.date === currentDate.toISOString().split('T')[0])
+          .filter(task => {
+            const taskDate = new Date(task.startTime);
+            return taskDate.toDateString() === currentDate.toDateString();
+          })
           .map((task) => {
             const { top, height } = calculateTaskPosition(task);
-            const tag = getTagById(task.tag);
+            const tag = getTagById(task.tagId);
 
             return (
               <div
                 key={task.id}
-                className={cn(
-                  "task-item absolute left-1 right-1 rounded-md p-2 cursor-pointer border-l-4 hover:shadow-md transition-shadow",
-                  tag?.bgColor || "bg-gray-100",
-                  tag?.textColor || "text-gray-700",
-                  tag?.borderColor || "border-l-gray-500"
-                )}
+                className="task-item absolute left-1 right-1 rounded-md p-2 cursor-pointer border-l-4 hover:shadow-md transition-shadow"
                 style={{
                   top: `${top}px`,
                   height: `${height}px`,
+                  backgroundColor: tag?.bgColor ? tag.bgColor.replace('bg-[', '').replace(']/10', '') + '10' : '#f3f4f6',
+                  color: tag?.textColor ? tag.textColor.replace('text-[', '').replace(']', '') : '#374151',
+                  borderLeftColor: tag?.borderColor ? tag.borderColor.replace('border-l-[', '').replace(']', '') : '#6b7280'
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -180,8 +181,8 @@ export function DayView({
               >
                 <div className="font-medium truncate">{task.title}</div>
                 <div className="text-xs truncate">
-                  {format(task.startTime, "h:mm a")} -{" "}
-                  {format(task.endTime, "h:mm a")}
+                  {format(new Date(task.startTime), "h:mm a")} -{" "}
+                  {format(new Date(task.endTime), "h:mm a")}
                 </div>
               </div>
             );

@@ -4,33 +4,30 @@ import SideBarStudent from "@/components/layout/SideBarStudent";
 import NavBar from "@/components/layout/NavBar";
 import {
   addDays,
-  isSameDay,
   addWeeks,
   subWeeks,
   addMonths,
   subMonths,
 } from "date-fns";
 import {
-  Calendar,
   ChevronLeft,
   ChevronRight,
   Plus,
-  Search,
-  Bell,
   TagIcon,
 } from "lucide-react";
-import { tasks as initialTasks, DEFAULT_TAGS } from "@/data/mock/taskData";
 import { VIEW_TYPES } from "@/types/schedule";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CalendarHeader } from "@/components/features/calendar/CalendarHeader";
 import { DayView } from "@/components/features/calendar/views/DayView";
 import { WeekView } from "@/components/features/calendar/views/WeekView";
-import { getTasksForDate } from "@/utils/taskUtils";
 import { MonthView } from "@/components/features/calendar/views/MonthView";
 import { TaskDialog } from "@/components/features/calendar/tasks/TaskDialog";
 import { TaskDetail } from "@/components/features/calendar/tasks/TaskDetail";
 import { TagManager } from "@/components/features/calendar/tasks/TagManager";
+import { scheduleAPI, tagsAPI } from "@/api";
+import { toast } from "sonner";
+
 export default function Schedule() {
   // Current date state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -45,13 +42,20 @@ export default function Schedule() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Custom tags state
-  const [customTags, setCustomTags] = useState(DEFAULT_TAGS);
+  const [customTags, setCustomTags] = useState([]);
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
 
   // Task states
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch tasks and tags on component mount
+  useEffect(() => {
+    fetchTasks();
+    fetchTags();
+  }, []);
 
   // Update current time every minute
   useEffect(() => {
@@ -61,6 +65,37 @@ export default function Schedule() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Fetch tasks from API
+  const fetchTasks = async () => {
+    try {
+      setIsLoading(true);
+      const response = await scheduleAPI.getTasks();
+      // Convert startTime and endTime to Date objects
+      const formattedTasks = response.data.map(task => ({
+        ...task,
+        startTime: new Date(task.startTime),
+        endTime: new Date(task.endTime),
+      }));
+      setTasks(formattedTasks);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      toast.error('Failed to fetch tasks');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch tags from API
+  const fetchTags = async () => {
+    try {
+      const response = await tagsAPI.getTags();
+      setCustomTags(response.data);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+      toast.error('Failed to fetch tags');
+    }
+  };
 
   // Navigation handlers
   const handlePrevious = () => {
@@ -87,17 +122,12 @@ export default function Schedule() {
     const today = new Date();
     setCurrentDate(today);
 
-    // Nếu đang ở chế độ day view, giữ nguyên
-    // Nếu đang ở chế độ week view, chuyển về tuần hiện tại
-    // Nếu đang ở chế độ month view, chuyển về tháng hiện tại
     if (viewType === VIEW_TYPES.WEEK) {
-      // Đảm bảo ngày hiện tại nằm trong tuần hiện tại
       const currentDay = today.getDay();
       const diff = today.getDate() - currentDay;
       const monday = new Date(today.setDate(diff));
       setCurrentDate(monday);
     } else if (viewType === VIEW_TYPES.MONTH) {
-      // Đảm bảo ngày hiện tại nằm trong tháng hiện tại
       const firstDayOfMonth = new Date(
         today.getFullYear(),
         today.getMonth(),
@@ -108,42 +138,69 @@ export default function Schedule() {
   };
 
   // Task handlers
-  const handleAddTask = (task) => {
-    setTasks((prev) => [
-      ...prev,
-      { ...task, id: Math.random().toString(36).substring(2, 9) },
-    ]);
-    setIsTaskDialogOpen(false);
+  const handleAddTask = async (task) => {
+    try {
+      const response = await scheduleAPI.createTask(task);
+      // Convert startTime and endTime to Date objects
+      const newTask = {
+        ...response.data,
+        startTime: new Date(response.data.startTime),
+        endTime: new Date(response.data.endTime),
+      };
+      setTasks((prev) => [...prev, newTask]);
+      setIsTaskDialogOpen(false);
+      toast.success('Task created successfully');
+    } catch (error) {
+      console.error('Error creating task:', error);
+      toast.error('Failed to create task');
+    }
   };
 
   const handleTaskClick = (task) => {
-    console.log("Task clicked:", task);
-    console.log("Task data:", {
-      id: task.id,
-      title: task.title,
-      startTime: task.startTime,
-      endTime: task.endTime,
-      tag: task.tag,
-    });
     setSelectedTask(task);
   };
 
   const handleCloseTaskDetail = () => {
-    console.log("Closing task detail");
     setSelectedTask(null);
   };
 
-  const handleUpdateTask = (updatedTask) => {
-    console.log("Updating task:", updatedTask);
-    setTasks((prev) =>
-      prev.map((task) => (task.id === updatedTask.id ? updatedTask : task))
-    );
-    setSelectedTask(null);
+  const handleUpdateTask = async (updatedTask) => {
+    try {
+      // Format dates to ISO string before sending to API
+      const taskToUpdate = {
+        ...updatedTask,
+        startTime: new Date(updatedTask.startTime).toISOString(),
+        endTime: new Date(updatedTask.endTime).toISOString(),
+      };
+      
+      const response = await scheduleAPI.updateTask(updatedTask.id, taskToUpdate);
+      // Convert startTime and endTime to Date objects
+      const formattedTask = {
+        ...response.data,
+        startTime: new Date(response.data.startTime),
+        endTime: new Date(response.data.endTime),
+      };
+      setTasks((prev) =>
+        prev.map((task) => (task.id === updatedTask.id ? formattedTask : task))
+      );
+      setSelectedTask(null);
+      toast.success('Task updated successfully');
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast.error('Failed to update task');
+    }
   };
 
-  const handleDeleteTask = (taskId) => {
-    setTasks((prev) => prev.filter((task) => task.id !== taskId));
-    setSelectedTask(null);
+  const handleDeleteTask = async (taskId) => {
+    try {
+      await scheduleAPI.deleteTask(taskId);
+      setTasks((prev) => prev.filter((task) => task.id !== taskId));
+      setSelectedTask(null);
+      toast.success('Task deleted successfully');
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast.error('Failed to delete task');
+    }
   };
 
   // Drag handlers
@@ -190,29 +247,6 @@ export default function Schedule() {
     return null;
   };
 
-  // Tag handlers
-  const handleAddTag = (tag) => {
-    setCustomTags((prev) => [...prev, tag]);
-  };
-
-  const handleUpdateTag = (updatedTag) => {
-    setCustomTags((prev) =>
-      prev.map((tag) => (tag.id === updatedTag.id ? updatedTag : tag))
-    );
-  };
-
-  const handleDeleteTag = (tagId) => {
-    // Check if tag is in use
-    const tagInUse = tasks.some((task) => task.tag === tagId);
-
-    if (tagInUse) {
-      alert("Cannot delete this tag as it is being used by one or more tasks.");
-      return;
-    }
-
-    setCustomTags((prev) => prev.filter((tag) => tag.id !== tagId));
-  };
-
   const getTagById = (tagId) => {
     return customTags.find((tag) => tag.id === tagId) || null;
   };
@@ -246,7 +280,7 @@ export default function Schedule() {
                       variant="ghost"
                       size="icon"
                       onClick={handlePrevious}
-                      className="bg-white hover:bg-[#1f53f3] text-gray-700 hover:text-white"
+                      className="bg-white hover:bg-[#1f53f3] text-gray-700 "
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -254,7 +288,7 @@ export default function Schedule() {
                       variant="ghost"
                       size="icon"
                       onClick={handleNext}
-                      className="bg-white hover:bg-[#1f53f3] text-gray-700 hover:text-white"
+                      className="bg-white hover:bg-[#1f53f3] text-gray-700"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -399,10 +433,7 @@ export default function Schedule() {
       <TagManager
         open={isTagManagerOpen}
         onOpenChange={setIsTagManagerOpen}
-        tags={customTags}
-        onAddTag={handleAddTag}
-        onUpdateTag={handleUpdateTag}
-        onDeleteTag={handleDeleteTag}
+        onTagsChange={setCustomTags}
       />
     </div>
   );

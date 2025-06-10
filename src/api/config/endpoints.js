@@ -31,13 +31,30 @@ export const AUTH_ENDPOINTS = {
   };
 
 export const USER_ENDPOINTS = {
-  PROFILE: '/auth/profile',
+  USER: "/user", // để gọi GET /
+  PROFILE: "/user/profile", // để gọi PUT /profile
 
-  // ... other endpoints
+  // ... other endpoint
 };
 
 export const COURSE_ENROLLMENT_ENDPOINTS = {
   MY_COURSES: '/api/coursesEnrollment/my-courses',
   // ... các endpoint khác nếu có
+};
+
+export const CALENDAR_ENDPOINTS = {
+  BASE: '/api/calendar',
+  BY_ID: (id) => `/api/calendar/${id}`,
+  CREATE: '/api/calendar',
+  UPDATE: (id) => `/api/calendar/${id}`,
+  DELETE: (id) => `/api/calendar/${id}`,
+};
+
+export const TAGS_ENDPOINTS = {
+  BASE: '/api/tags',
+  BY_ID: (id) => `/api/tags/${id}`,
+  CREATE: '/api/tags',
+  UPDATE: (id) => `/api/tags/${id}`,
+  DELETE: (id) => `/api/tags/${id}`,
 };
 

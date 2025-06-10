@@ -64,32 +64,9 @@ function App() {
         <Route path="/auth/register" element={<RegisterPage />} />
         <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/auth/select-role" element={<SelectRolePage />} />
-        <Route
-          path="/student/courses/:courseId/lessons/:lessonId"
-          element={<LessonDetail />}
-        />
-        {/* Student routes */}
-        <Route path="/student/courses" element={<CoursePage />} />
-        <Route path="/student/courses/:courseId" element={<CourseDetail />} />
-        <Route
-          path="/student/courses/:courseId/assignments/:assignmentId"
-          element={<AssignmentDetail />}
-        />
-        <Route
-          path="/student/courses/:courseId/discussions/:discussionId"
-          element={<DiscussionDetail />}
-        />
-        <Route path="/student/schedule" element={<Schedule />} />
-        <Route path="/student/flashcards" element={<FlashCard />} />
-        <Route
-          path="/student/flashcards/create-card"
-          element={<CreateCards />}
-        />
-        <Route path="/student/flashcards/study" element={<Study />} />
         <Route path="/auth/google/success" element={<GoogleSuccess />} />
-        <Route path="/student/pomodoro" element={<PomodoroPage />} />
-        <Route path="/student/al-assistant" element={<AlAssistantPage />} />
         <Route path="/auth/settings" element={<SettingPage />} />
+        {/* Student routes */}
         <Route
           path="/student/dashboard"
           element={
@@ -98,7 +75,96 @@ function App() {
             </ProtectedRoute>
           }
         />
-
+        <Route
+          path="/student/courses"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <CoursePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/courses/:courseId"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <CourseDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/courses/:courseId/lessons/:lessonId"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <LessonDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/courses/:courseId/assignments/:assignmentId"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <AssignmentDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/courses/:courseId/discussions/:discussionId"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <DiscussionDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/schedule"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <Schedule />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/flashcards"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <FlashCard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/flashcards/create-card"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <CreateCards />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/flashcards/study"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <Study />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/pomodoro"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <PomodoroPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/al-assistant"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <AlAssistantPage />
+            </ProtectedRoute>
+          }
+        />
+        
+        
         {/* Teacher routes */}
         <Route
           path="/teacher/dashboard"

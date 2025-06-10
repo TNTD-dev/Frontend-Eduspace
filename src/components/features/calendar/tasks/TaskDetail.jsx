@@ -8,20 +8,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-/**
- * @param {import('@/types/taskDetail').TaskDetailProps} props
- */
-export function TaskDetail({ task, onClose, onUpdate, onDelete, customTags }) {
-  console.log("TaskDetail rendered with task:", task);
-  console.log("TaskDetail props:", { task, onClose, onUpdate, onDelete, customTags });
 
+export function TaskDetail({ task, onClose, onUpdate, onDelete, customTags }) {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
   const [date, setDate] = useState(format(task.startTime, "yyyy-MM-dd"));
   const [startTime, setStartTime] = useState(format(task.startTime, "HH:mm"));
   const [endTime, setEndTime] = useState(format(task.endTime, "HH:mm"));
-  const [tag, setTag] = useState(task.tag);
+  const [tag, setTag] = useState(task.tagId);
 
   const currentTag = customTags.find((t) => t.id === tag) || null;
   const tagLabel = currentTag?.name || "Unknown";
@@ -44,7 +39,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete, customTags }) {
       description,
       startTime: startDateTime,
       endTime: endDateTime,
-      tag,
+      tagId: tag,
     };
     console.log("Updating task with data:", updatedTask);
     onUpdate(updatedTask);
@@ -63,12 +58,11 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete, customTags }) {
         <DialogHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
             <div
-               className={cn(
-                "w-3 h-3 rounded-full",
-                currentTag?.bgColor || "bg-gray-100",
-                "border-l-4",
-                currentTag?.borderColor || "border-l-gray-500"
-              )}
+              className="w-3 h-3 rounded-full border-l-4"
+              style={{
+                backgroundColor: currentTag?.bgColor ? currentTag.bgColor.replace('bg-[', '').replace(']/10', '') + '10' : '#f3f4f6',
+                borderLeftColor: currentTag?.borderColor ? currentTag.borderColor.replace('border-l-[', '').replace(']', '') : '#6b7280'
+              }}
             ></div>
             <DialogTitle>{isEditing ? "Edit Task" : "Task Details"}</DialogTitle>
           </div>
@@ -195,7 +189,13 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete, customTags }) {
             </div>
             <div className="flex items-center gap-2 text-sm">
               <TagIcon className="w-4 h-4" />
-              <span className={currentTag?.textColor}>{tagLabel}</span>
+              <span
+                style={{
+                  color: currentTag?.textColor ? currentTag.textColor.replace('text-[', '').replace(']', '') : '#374151'
+                }}
+              >
+                {tagLabel}
+              </span>
             </div>
           </div>
         )}

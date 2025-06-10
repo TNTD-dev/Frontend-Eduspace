@@ -6,9 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
-/**
- * @param {import("@/types/taskDialog").TaskDialogProps} props
- */
+
 export function TaskDialog({
   open,
   onOpenChange,
@@ -22,7 +20,7 @@ export function TaskDialog({
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
-  const [tag, setTag] = useState(customTags[0]?.id || ""); 
+  const [tag, setTag] = useState(null);
 
   // Update form when initialStartTime and initialEndTime change
   useEffect(() => {
@@ -34,9 +32,9 @@ export function TaskDialog({
     if (open) {
       setTitle("");
       setDescription("");
-      setTag(customTags[0]?.id || "");
+      setTag(null);
     }
-  }, [initialStartTime, initialEndTime, open, customTags]);
+  }, [initialStartTime, initialEndTime, open]);
 
   const resetForm = () => {
     setTitle("");
@@ -44,22 +42,24 @@ export function TaskDialog({
     setDate(format(new Date(), "yyyy-MM-dd"));
     setStartTime("09:00");
     setEndTime("10:00");
-    setTag(customTags[0]?.id || "");
+    setTag(null);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Format dates to ISO string
     const startDateTime = new Date(`${date}T${startTime}`);
     const endDateTime = new Date(`${date}T${endTime}`);
+    
     const newTask = {
-      id: Date.now().toString(),
       title,
       description,
-      startTime: startDateTime,
-      endTime: endDateTime,
-      tag,
-      date,
+      startTime: startDateTime.toISOString(),
+      endTime: endDateTime.toISOString(),
+      tagId: tag ? parseInt(tag) : null, // Convert to integer if tag is selected
     };
+    
     onAddTask(newTask);
     onOpenChange(false);
     resetForm();
@@ -87,6 +87,7 @@ export function TaskDialog({
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              className="break-all max-w-full"
             />
           </div>
           <div className="flex gap-2">
@@ -126,9 +127,10 @@ export function TaskDialog({
             <select
               id="tag"
               className="w-full border rounded px-2 py-2"
-              value={tag}
-              onChange={(e) => setTag(e.target.value)}
+              value={tag || ""}
+              onChange={(e) => setTag(e.target.value ? parseInt(e.target.value) : null)}
             >
+              <option value="">Select a tag</option>
               {customTags.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}

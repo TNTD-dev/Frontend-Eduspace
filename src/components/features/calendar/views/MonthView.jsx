@@ -43,7 +43,10 @@ export function MonthView({ currentDate, tasks, onTaskClick, getTagById }) {
           >
             {week.map((day, j) => {
               const dayTasks = tasks.filter(
-                (task) => task.date === format(day, "yyyy-MM-dd")
+                (task) => {
+                  const taskDate = new Date(task.startTime);
+                  return taskDate.toDateString() === day.toDateString();
+                }
               );
               return (
                 <div
@@ -64,16 +67,16 @@ export function MonthView({ currentDate, tasks, onTaskClick, getTagById }) {
                   {/* Render tasks for this day */}
                   <div className="space-y-1">
                     {dayTasks.map((task) => {
-                      const tag = getTagById(task.tag);
+                      const tag = getTagById(task.tagId);
                       return (
                         <div
                           key={task.id}
-                          className={cn(
-                            "truncate px-2 py-1 rounded text-xs mb-1 cursor-pointer border-l-4",
-                            tag?.bgColor || "bg-gray-100",
-                            tag?.textColor || "text-gray-700",
-                            tag?.borderColor || "border-l-gray-500"
-                          )}
+                          className="truncate px-2 py-1 rounded text-xs mb-1 cursor-pointer border-l-4"
+                          style={{
+                            backgroundColor: tag?.bgColor ? tag.bgColor.replace('bg-[', '').replace(']/10', '') + '10' : '#f3f4f6',
+                            color: tag?.textColor ? tag.textColor.replace('text-[', '').replace(']', '') : '#374151',
+                            borderLeftColor: tag?.borderColor ? tag.borderColor.replace('border-l-[', '').replace(']', '') : '#6b7280'
+                          }}
                           onClick={() => onTaskClick(task)}
                           title={task.title}
                         >
@@ -81,8 +84,8 @@ export function MonthView({ currentDate, tasks, onTaskClick, getTagById }) {
                             {task.title}
                           </div>
                           <div className="text-xs truncate">
-                            {format(task.startTime, "h:mm a")} -{" "}
-                            {format(task.endTime, "h:mm a")}
+                            {format(new Date(task.startTime), "h:mm a")} -{" "}
+                            {format(new Date(task.endTime), "h:mm a")}
                           </div>
                         </div>
                       );

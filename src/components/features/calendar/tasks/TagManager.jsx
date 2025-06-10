@@ -1,18 +1,19 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Edit, Trash, Plus, Tag as TagIcon } from "lucide-react"
+import { Edit, Trash, Tag as TagIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { tagsAPI } from "@/api"
+import { toast } from "sonner"
 
-/**
- * @param {import('@/types/tagManager').TagManagerProps} props
- */
-export function TagManager({ open, onOpenChange, tags, onAddTag, onUpdateTag, onDeleteTag }) {
+
+export function TagManager({ open, onOpenChange, onTagsChange }) {
   const [activeTab, setActiveTab] = useState("view")
   const [editingTag, setEditingTag] = useState(null)
+  const [tags, setTags] = useState([])
 
   // New tag form state
   const [newTagName, setNewTagName] = useState("")
@@ -22,84 +23,126 @@ export function TagManager({ open, onOpenChange, tags, onAddTag, onUpdateTag, on
   const [editTagName, setEditTagName] = useState("")
   const [editTagColor, setEditTagColor] = useState("")
 
-  const handleAddNewTag = () => {
+  // Fetch tags when component mounts
+  useEffect(() => {
+    if (open) {
+      fetchTags();
+    }
+  }, [open]);
+
+  const fetchTags = async () => {
+    try {
+      const response = await tagsAPI.getTags();
+      setTags(response.data);
+      if (onTagsChange) {
+        onTagsChange(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+      toast.error('Failed to fetch tags');
+    }
+  };
+
+  const handleAddNewTag = async () => {
     if (!newTagName.trim()) {
-      alert("Please enter a tag name")
-      return
+      toast.error("Please enter a tag name");
+      return;
     }
 
-    // Create tag ID from name (lowercase, no spaces)
-    const tagId = newTagName.toLowerCase().replace(/\s+/g, "-")
+    try {
+      const newTag = {
+        name: newTagName,
+        bgColor: `bg-[${newTagColor}]/10`,
+        textColor: `text-[${newTagColor}]`,
+        borderColor: `border-l-[${newTagColor}]`,
+      };
 
-    // Check if tag ID already exists
-    if (tags.some((tag) => tag.id === tagId)) {
-      alert("A tag with this name already exists")
-      return
+      const response = await tagsAPI.createTag(newTag);
+      setTags(prev => [...prev, response.data]);
+      if (onTagsChange) {
+        onTagsChange([...tags, response.data]);
+      }
+      
+      setNewTagName("");
+      setNewTagColor("#3b82f6");
+      setActiveTab("view");
+      toast.success('Tag created successfully');
+    } catch (error) {
+      console.error('Error creating tag:', error);
+      toast.error('Failed to create tag');
     }
-
-    const newTag = {
-      id: tagId,
-      name: newTagName,
-      bgColor: `bg-[${newTagColor}]/10`,
-      textColor: `text-[${newTagColor}]`,
-      borderColor: `border-l-[${newTagColor}]`,
-    }
-
-    onAddTag(newTag)
-    setNewTagName("")
-    setNewTagColor("#3b82f6")
-    setActiveTab("view")
-  }
+  };
 
   const handleEditTag = (tag) => {
-    setEditingTag(tag)
-    setEditTagName(tag.name)
+    setEditingTag(tag);
+    setEditTagName(tag.name);
 
     // Extract color from borderColor
-    const colorMatch = tag.borderColor.match(/border-l-\[(.*?)\]/)
+    const colorMatch = tag.borderColor.match(/border-l-\[(.*?)\]/);
     if (colorMatch && colorMatch[1]) {
-      setEditTagColor(colorMatch[1])
+      setEditTagColor(colorMatch[1]);
     } else {
       // Default fallback
-      setEditTagColor("#3b82f6")
+      setEditTagColor("#3b82f6");
     }
 
-    setActiveTab("edit")
-  }
+    setActiveTab("edit");
+  };
 
-  const handleUpdateTag = () => {
-    if (!editingTag) return
+  const handleUpdateTag = async () => {
+    if (!editingTag) return;
     if (!editTagName.trim()) {
-      alert("Please enter a tag name")
-      return
+      toast.error("Please enter a tag name");
+      return;
     }
 
-    const updatedTag = {
-      ...editingTag,
-      name: editTagName,
-      bgColor: `bg-[${editTagColor}]/10`,
-      textColor: `text-[${editTagColor}]`,
-      borderColor: `border-l-[${editTagColor}]`,
+    try {
+      const updatedTag = {
+        name: editTagName,
+        bgColor: `bg-[${editTagColor}]/10`,
+        textColor: `text-[${editTagColor}]`,
+        borderColor: `border-l-[${editTagColor}]`,
+      };
+
+      await tagsAPI.updateTag(editingTag.id, updatedTag);
+      await fetchTags(); // Fetch updated tags after successful update
+
+      setEditingTag(null);
+      setActiveTab("view");
+      toast.success('Tag updated successfully');
+    } catch (error) {
+      console.error('Error updating tag:', error);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to update tag');
+      }
     }
+  };
 
-    onUpdateTag(updatedTag)
-    setEditingTag(null)
-    setActiveTab("view")
-  }
-
-  const handleDeleteTag = (tagId) => {
+  const handleDeleteTag = async (tagId) => {
     if (confirm("Are you sure you want to delete this tag?")) {
-      onDeleteTag(tagId)
+      try {
+        await tagsAPI.deleteTag(tagId);
+        setTags(prev => prev.filter(tag => tag.id !== tagId));
+        if (onTagsChange) {
+          onTagsChange(tags.filter(tag => tag.id !== tagId));
+        }
+        toast.success('Tag deleted successfully');
+      } catch (error) {
+        console.error('Error deleting tag:', error);
+        toast.error('Failed to delete tag');
+      }
     }
-  }
+  };
 
   const handleClose = () => {
-    setActiveTab("view")
-    setEditingTag(null)
-    setNewTagName("")
-    setNewTagColor("#3b82f6")
-    onOpenChange(false)
-  }
+    setActiveTab("view");
+    setEditingTag(null);
+    setNewTagName("");
+    setNewTagColor("#3b82f6");
+    onOpenChange(false);
+  };
 
   // Helper function to render tag preview
   const renderTagPreview = (name, color) => {
@@ -107,10 +150,7 @@ export function TagManager({ open, onOpenChange, tags, onAddTag, onUpdateTag, on
       <div className="mt-4 p-4 border rounded-md">
         <h4 className="text-sm font-medium mb-2">Preview:</h4>
         <div
-          className={cn(
-            "inline-flex items-center px-3 py-1 rounded-md border-l-4",
-            "hover:shadow-md transition-shadow"
-          )}
+          className="inline-flex items-center px-3 py-1 rounded-md border-l-4 hover:shadow-md transition-shadow"
           style={{
             borderLeftColor: color,
             backgroundColor: `${color}10`,
@@ -121,8 +161,8 @@ export function TagManager({ open, onOpenChange, tags, onAddTag, onUpdateTag, on
           <span>{name || "Tag Name"}</span>
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -152,14 +192,18 @@ export function TagManager({ open, onOpenChange, tags, onAddTag, onUpdateTag, on
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className={cn(
-                        "w-3 h-3 rounded-full",
-                        tag.bgColor,
-                        "border-l-4",
-                        tag.borderColor
-                      )}
+                      className="w-3 h-3 rounded-full border-l-4"
+                      style={{
+                        borderLeftColor: tag.borderColor.replace('border-l-[', '').replace(']', ''),
+                        backgroundColor: tag.bgColor.replace('bg-[', '').replace(']/10', '') + '10',
+                      }}
                     />
-                    <span className={cn("font-medium", tag.textColor)}>
+                    <span
+                      style={{
+                        color: tag.textColor.replace('text-[', '').replace(']', '')
+                      }}
+                      className="font-medium"
+                    >
                       {tag.name}
                     </span>
                   </div>

@@ -1,14 +1,32 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import TaskItem from "@/components/features/calendar/tasks/TaskItem"
-import { tasks } from "@/data/mock/taskData"
-import { getTasksForDate } from "@/utils/taskUtils"
+import { scheduleAPI } from "@/api"
+import { isToday } from "date-fns"
 
 export default function CalendarCard() {
   const [currentMonth, setCurrentMonth] = useState(new Date()) // Current date
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]) // Default selected date
   const [hoveredDate, setHoveredDate] = useState(null)
+  const [tasks, setTasks] = useState([])
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await scheduleAPI.getTasks();
+        const formattedTasks = response.data.map(task => ({
+          ...task,
+          startTime: new Date(task.startTime),
+          endTime: new Date(task.endTime),
+        }));
+        setTasks(formattedTasks);
+      } catch (error) {
+        setTasks([]);
+      }
+    };
+    fetchTasks();
+  }, []);
 
   // Get days in month
   const getDaysInMonth = (year, month) => {
@@ -80,11 +98,17 @@ export default function CalendarCard() {
     setHoveredDate(dateString)
   }
 
-  // Get tasks for selected date
-  const selectedTasks = getTasksForDate(new Date(selectedDate))
+  // Get tasks for selected date (so sánh yyyy-mm-dd của startTime)
+  const selectedTasks = tasks.filter(task => {
+    const taskDate = task.startTime instanceof Date ? task.startTime : new Date(task.startTime);
+    return taskDate.toISOString().split('T')[0] === selectedDate;
+  });
 
   // Get tasks for hovered date
-  const hoveredTasks = hoveredDate ? getTasksForDate(new Date(hoveredDate)) : []
+  const hoveredTasks = hoveredDate ? tasks.filter(task => {
+    const taskDate = task.startTime instanceof Date ? task.startTime : new Date(task.startTime);
+    return taskDate.toISOString().split('T')[0] === hoveredDate;
+  }) : [];
 
   // Determine which tasks to display
   const displayTasks = hoveredDate ? hoveredTasks : selectedTasks
@@ -123,7 +147,10 @@ export default function CalendarCard() {
             }
 
             const dateString = formatDateString(day)
-            const hasTask = tasks.some(task => task.date === dateString)
+            const hasTask = tasks.some(task => {
+              const taskDate = task.startTime instanceof Date ? task.startTime : new Date(task.startTime);
+              return taskDate.toISOString().split('T')[0] === dateString;
+            });
             const isSelected = dateString === selectedDate
 
             return (

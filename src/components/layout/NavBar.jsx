@@ -9,9 +9,9 @@ const NavBar = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
   useEffect(() => {
-    userAPI.getProfile()
+    userAPI.getUser()
       .then(res => {
-        setUser(res);
+        setUser(res.data);
         setLoading(false);
       })
       .catch(err => {

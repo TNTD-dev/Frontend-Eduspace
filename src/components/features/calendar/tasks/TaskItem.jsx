@@ -14,7 +14,6 @@ import { CircleCheck, EllipsisVertical } from 'lucide-react'
  */
 const TaskItem = ({ task }) => {
   const { id, title, time, category, icon } = task;
-
   return (
     <div className="flex items-center gap-3 rounded-lg bg-white p-3 shadow-sm">
       <div className="flex h-8 w-8 items-center justify-center ">

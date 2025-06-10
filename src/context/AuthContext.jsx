@@ -26,48 +26,10 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
-    try {
-      setLoading(true);
-      // TODO: Implement your login logic here
-      setUser({ email });
-      navigate('/dashboard');
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error.message };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const register = async (userData) => {
-    try {
-      setLoading(true);
-      // TODO: Implement your registration logic here
-      setUser({ email: userData.email });
-      navigate('/dashboard');
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error.message };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-    navigate('/auth/login');
-  };
-
   const value = {
     user,
     setUser,
     loading,
-    login,
-    register,
-    logout,
     isAuthenticated: !!user && !!localStorage.getItem('token'),
     userRole: user?.role || null
   };
