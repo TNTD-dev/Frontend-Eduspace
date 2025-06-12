@@ -65,7 +65,7 @@ export default function TeacherCourseDetail() {
   const isPublished = course?.status === "published";
   const isArchived = course?.status === "archived";
 
-  // ─── Load course, modules, and students ────────────────────────────────────
+  //load details
   useEffect(() => {
     setLoading(true);
     setTimeout(() => {
@@ -73,7 +73,7 @@ export default function TeacherCourseDetail() {
       setCourse(found || null);
 
       if (found) {
-        // Modules
+        //modules
         if (found.modules) {
           setModulesState(
             found.modules.map((m) => ({
@@ -91,14 +91,14 @@ export default function TeacherCourseDetail() {
           setExpandedModules({});
         }
 
-        // Draft fields
+        //draft fields
         setDraftDescription(found.description || "");
         setDraftStartDate(found.startDate || "");
         setDraftEndDate(found.endDate || "");
         setDraftSchedule(found.schedule || "");
         setDraftLocation(found.location || "");
 
-        // Students (mock data)
+        //students (mock)
         setStudents(studentData[found.id] || []);
       } else {
         setModulesState([]);
@@ -108,9 +108,8 @@ export default function TeacherCourseDetail() {
       setLoading(false);
     }, 500);
   }, [courseId]);
-  // ─────────────────────────────────────────────────────────────────────────────
 
-  // ─── Handle return from “Add/Edit Assignment” ───────────────────────────────
+  //handle add assignment
   useEffect(() => {
     if (course && location.state?.fromAssignment) {
       const { action, assignment } = location.state.fromAssignment;
@@ -135,9 +134,8 @@ export default function TeacherCourseDetail() {
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, course, navigate]);
-  // ─────────────────────────────────────────────────────────────────────────────
 
-  // ─── Handle return from “Add/Edit Resource” ────────────────────────────────
+  //handle add resources
   useEffect(() => {
     if (course && location.state?.fromResource) {
       const { action, resource } = location.state.fromResource;
@@ -162,7 +160,6 @@ export default function TeacherCourseDetail() {
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, course, navigate]);
-  // ─────────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (course && location.state?.fromModule) {
@@ -174,7 +171,7 @@ export default function TeacherCourseDetail() {
     }
   }, [location.state, course, navigate, location.pathname]);
 
-  // ─── Module & Lesson Helpers ───────────────────────────────────────────────
+  //module and lessons
   const toggleModule = (mid) => {
     setExpandedModules((prev) => ({ ...prev, [mid]: !prev[mid] }));
   };
@@ -293,9 +290,8 @@ export default function TeacherCourseDetail() {
       })
     );
   };
-  // ─────────────────────────────────────────────────────────────────────────────
 
-  // ─── Save “About” & “Details” edits ─────────────────────────────────────────
+  //save about and details
   const saveAbout = () => {
     setCourse((prev) => ({ ...prev, description: draftDescription }));
     setIsEditingAbout(false);
@@ -311,9 +307,8 @@ export default function TeacherCourseDetail() {
     }));
     setIsEditingDetails(false);
   };
-  // ─────────────────────────────────────────────────────────────────────────────
 
-  // ─── Navigation handlers ────────────────────────────────────────────────────
+  //navigation
   const handleLessonClick = (lid) =>
     navigate(`/teacher/courses/${courseId}/lessons/${lid}`);
 
@@ -370,7 +365,6 @@ export default function TeacherCourseDetail() {
       state: { fromResource: { action: "delete", resource: { id: resId } } }
     });
   };
-  // ─────────────────────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -421,7 +415,7 @@ export default function TeacherCourseDetail() {
     );
   }
 
-  // Top 10 students sorted by descending score
+  //top 10 stu stu
   const topTen = [...students]
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);
@@ -434,7 +428,7 @@ export default function TeacherCourseDetail() {
           <div className="mx-auto max-w-7xl px-4 py-6">
             <NavBar />
 
-            {/* ─── HEADER ────────────────────────────────────────────────────────────── */}
+            {/*header*/}
             <div
               className="relative rounded-t-lg overflow-hidden h-64 bg-cover bg-center mb-6"
               style={{ backgroundImage: `url(${course.image})` }}
@@ -504,9 +498,8 @@ export default function TeacherCourseDetail() {
                 </div>
               )}
             </div>
-            {/* ──────────────────────────────────────────────────────────────────────── */}
 
-            {/* ─── TAB NAVIGATOR ───────────────────────────────────────────────────────── */}
+            {/*tabs*/}
             <div className="border-b bg-white mb-6">
               <div className="flex space-x-1 px-6">
                 {[
@@ -530,12 +523,11 @@ export default function TeacherCourseDetail() {
                 ))}
               </div>
             </div>
-            {/* ──────────────────────────────────────────────────────────────────────── */}
 
-            {/* ─── “About This Course” + “Course Details” ─────────────────────────────── */}
+            {/*about this course + course details*/}
             <div className="p-6 mb-6">
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                {/* About This Course */}
+                {/*about*/}
                 <div className="lg:col-span-2">
                   <div className="relative rounded-lg border bg-white p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
@@ -584,7 +576,7 @@ export default function TeacherCourseDetail() {
                   </div>
                 </div>
 
-                {/* Course Details */}
+                {/*details*/}
                 <div className="lg:col-span-1">
                   <div className="relative rounded-lg border bg-white p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
@@ -760,9 +752,8 @@ export default function TeacherCourseDetail() {
                 </div>
               </div>
             </div>
-            {/* ──────────────────────────────────────────────────────────────────────── */}
 
-            {/* ─── TAB CONTENT ─────────────────────────────────────────────────────────── */}
+            {/*tab content*/}
             {activeTab === "content" && (
               <div className="rounded-lg border bg-white p-6 shadow-sm mb-6">
                 <div className="flex items-center justify-between mb-4">
@@ -1004,12 +995,6 @@ export default function TeacherCourseDetail() {
                         >
                           Status
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500"
-                        >
-                          Grade
-                        </th>
                         <th scope="col" className="relative px-6 py-3">
                           <span className="sr-only">Actions</span>
                         </th>
@@ -1050,15 +1035,6 @@ export default function TeacherCourseDetail() {
                                 ? "In Progress"
                                 : "To Do"}
                             </span>
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4">
-                            {assign.grade ? (
-                              <div className="text-sm font-medium text-gray-900">
-                                {assign.grade}
-                              </div>
-                            ) : (
-                              <div className="text-sm text-gray-500">-</div>
-                            )}
                           </td>
                           <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                             <div className="flex items-center justify-end gap-2">
@@ -1274,12 +1250,12 @@ export default function TeacherCourseDetail() {
               </div>
             )}
 
-            {/* ─── STUDENTS TAB ─────────────────────────────────────────────────────── */}
+            {/*student tab*/}
             {activeTab === "students" && (
               <div className="grid gap-6 lg:grid-cols-3 h-full">
                 {/* Left column (one-third width): Top 10 + Class Overview */}
                 <div className="col-span-1 flex flex-col space-y-6 h-full">
-                  {/* ─── Top 10 Students Box ─────────────────────────────────────────── */}
+                  {/*top 10*/}
                   <div className="rounded-lg border bg-white p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="text-xl font-bold text-gray-800">
@@ -1330,7 +1306,7 @@ export default function TeacherCourseDetail() {
                     </div>
                   </div>
 
-                  {/* ─── Class Overview Box ──────────────────────────────────────────── */}
+                  {/*class overview*/}
                   <div className="rounded-lg border bg-white p-6 shadow-sm flex-1 flex flex-col">
                     <div className="flex items-center gap-4 mb-6">
                       <div className="rounded-full bg-blue-100 p-3">
@@ -1390,7 +1366,7 @@ export default function TeacherCourseDetail() {
                     </div>
                   </div>
                 </div>
-            {/* ─── Enrolled Students Box (two-thirds width) ──────────── */}
+            {/*enrolled students*/}
             <div className="col-span-2 flex flex-col h-205">
               <div className="rounded-lg border bg-white p-6 shadow-sm flex flex-col h-full">
                 <div className="flex items-center justify-between mb-4">

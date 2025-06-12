@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
+import { useMatch } from "react-router-dom";
 import SideBarTeacher from "@/components/layout/SideBarTeacher";
 import NavBar from "@/components/layout/NavBar";
 import {
@@ -22,6 +23,8 @@ import {
   Eye,
   EyeOff,
   Plus,
+  FileText,
+  MessageSquare,
 } from "lucide-react";
 import { currentCourses, completedCourses } from "@/data/mock/courseData";
 
@@ -32,38 +35,42 @@ export default function TeacherAssignmentDetail() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Determine if this is “New” or “Edit” mode
+  //new or edit mode
   const isNew = assignmentId === "new";
-  const isEditingRoute = location.pathname.endsWith("/edit");
-  const isEditing = isNew || isEditingRoute;
+  const matchEdit = useMatch("/teacher/courses/:courseId/assignments/:assignmentId/edit");
+  const isEditing = isNew || !!matchEdit;
 
-  // Refs
   const editorRef = useRef(null);
 
-  // Course & Assignment “view” data
+  //course view data
   const [course, setCourse] = useState(null);
   const [assignment, setAssignment] = useState(null);
 
-  // “Form” state (for new/edit)
+  //form state
   const [title, setTitle] = useState("");
   const [scoreOutOf, setScoreOutOf] = useState("Ungraded");
   const [dueDate, setDueDate] = useState("");
   const [instructionsHtml, setInstructionsHtml] = useState("");
   const [visible, setVisible] = useState(true);
 
-  // File‐attachment state (for form)
+  //file‐attachment
   const [imageFile, setImageFile] = useState(null);
   const [folderFiles, setFolderFiles] = useState([]);
 
-  // Mock “student submissions” data (for view)
+  //mock data
   const [submissionHistory, setSubmissionHistory] = useState([]);
+  const [showSubmissionModal, setShowSubmissionModal] = useState(false);
+  const [activeSubmission, setActiveSubmission] = useState(null);
+  const [gradeInput, setGradeInput] = useState("");
+  const [feedbackInput, setFeedbackInput] = useState("");
+
   const [selectedFile, setSelectedFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackMap, setFeedbackMap] = useState({});
 
   const [loading, setLoading] = useState(true);
 
-  // ─── 1) Load course + assignment data ───────────────────────────────────────────
+  //load course
   useEffect(() => {
     setLoading(true);
 
@@ -77,22 +84,21 @@ export default function TeacherAssignmentDetail() {
     }
 
     if (!isNew) {
-      // If editing/viewing an existing assignment:
-      const rawId = assignmentId.split("/")[0];
-      const foundAssign = foundCourse.assignments?.find(
-        (a) => a.id === parseInt(rawId)
+      //view already existed assignment
+      const rawId = assignmentId;                                 
+      const foundAssign = foundCourse.assignments?.find(a =>      
+        String(a.id) === rawId
       );
       setAssignment(foundAssign || null);
 
       if (foundAssign) {
-        // Populate form fields from existing assignment:
         setTitle(foundAssign.title || "");
         setScoreOutOf(foundAssign.scoreOutOf ?? "Ungraded");
         setDueDate(foundAssign.dueDate || "");
         setInstructionsHtml(foundAssign.instructions || "");
         setVisible(foundAssign.visible == null ? true : foundAssign.visible);
 
-        // Mock some “student submissions” for the view mode:
+        //mock data
         const mockSubs = [
           {
             id: 1,
@@ -122,7 +128,7 @@ export default function TeacherAssignmentDetail() {
         setFeedbackMap(fm);
       }
     } else {
-      // “New” assignment: clear form
+      //new assignment
       setAssignment(null);
       setTitle("");
       setScoreOutOf("Ungraded");
@@ -138,7 +144,7 @@ export default function TeacherAssignmentDetail() {
     setLoading(false);
   }, [courseId, assignmentId, isNew, isEditing]);
 
-  // ─── 2) Handle “Preview Student Submission” (view mode) ─────────────────────────
+  //view mode
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setSelectedFile(file);
@@ -149,7 +155,7 @@ export default function TeacherAssignmentDetail() {
     if (!selectedFile) return;
     setIsSubmitting(true);
 
-    // Simulate network delay
+    //network delay
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const newSub = {
@@ -166,7 +172,7 @@ export default function TeacherAssignmentDetail() {
     setIsSubmitting(false);
   };
 
-  // ─── 3) “Save” logic for New/Edit ─────────────────────────────────────────────────
+  //save
   const handleSave = (closeAfter = false) => {
     const id = !isNew ? parseInt(assignmentId.split("/")[0]) : Date.now();
     const assignmentObj = {
@@ -188,7 +194,7 @@ export default function TeacherAssignmentDetail() {
     });
   };
 
-  // ─── 4) “Delete” logic ────────────────────────────────────────────────────────────
+  //delete
   const handleDelete = () => {
     if (!window.confirm("Delete this assignment?")) return;
     navigate(`/teacher/courses/${courseId}`, {
@@ -201,7 +207,7 @@ export default function TeacherAssignmentDetail() {
     });
   };
 
-  // ─── 5) Rich‐Text Toolbar Commands ────────────────────────────────────────────────
+  //rick text editor
   const execCommand = (command, value = null) => {
     document.execCommand(command, false, value);
     // After running the command, update our state:
@@ -211,7 +217,7 @@ export default function TeacherAssignmentDetail() {
     }
   };
 
-  // ─── 6) Loading / “Not Found” screens ────────────────────────────────────────────
+  //loading + not found
   if (loading) {
     return (
       <div className="flex min-h-screen bg-[#f4f9fc]">
@@ -278,9 +284,7 @@ export default function TeacherAssignmentDetail() {
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────────────────
-  // ─── RENDER “EDIT / NEW” FORM ──────────────────────────────────────────────────
-  // ────────────────────────────────────────────────────────────────────────────────
+  //edit or new form
   if (isEditing) {
     return (
       <div className="flex min-h-screen bg-[#f4f9fc]">
@@ -290,7 +294,7 @@ export default function TeacherAssignmentDetail() {
         <div className="mx-auto max-w-7xl px-4 py-6">
         <NavBar />
       <div className="min-h-screen bg-[#f4f9fc]">
-        {/* Top bar: “Back to Manage Assignments” */}
+        {/*go back*/}
         <div className="w-full bg-[#f4f9fc] px-4">
           <Link
             to={`/teacher/courses/${courseId}`}
@@ -305,16 +309,16 @@ export default function TeacherAssignmentDetail() {
 
         <div className="max-w-4xl mx-auto py-6 px-4">
           <div className="bg-white rounded-lg shadow-sm">
-            {/* Title of form */}
+            {/*title*/}
             <div className="px-6 pt-6 pb-4 border-b border-gray-200">
               <h1 className="text-2xl font-semibold">
                 {isNew ? "New Assignment" : "Edit Assignment"}
               </h1>
             </div>
 
-            {/* Form fields */}
+            {/*form*/}
             <div className="px-6 py-6 space-y-6">
-              {/* Name */}
+              {/*name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Name <span className="text-red-500">*</span>
@@ -328,7 +332,7 @@ export default function TeacherAssignmentDetail() {
                 />
               </div>
 
-              {/* Score Out Of & Due Date */}
+              {/*score out of and due*/}
               <div className="flex flex-col gap-4 sm:flex-row">
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-700">
@@ -358,14 +362,13 @@ export default function TeacherAssignmentDetail() {
                 </div>
               </div>
 
-              {/* Instructions → Rich‐Text Editor */}
 <div>
   <label className="block text-sm font-medium text-gray-700">
     Instructions
   </label>
 
   <div className="mt-1 border border-gray-300 rounded-md">
-    {/* ─── Toolbar ────────────────────────────────────────────────────────── */}
+    {/*tool bar*/}
     <div className="flex items-center border-b border-gray-200 bg-gray-50 px-2 py-1 space-x-1">
       <button
         type="button"
@@ -433,35 +436,28 @@ export default function TeacherAssignmentDetail() {
         type="button"
         className="ml-auto p-1 hover:bg-gray-100 rounded"
         onClick={() => {
-          // Clear the editor’s contents, but don’t re-render on every keystroke:
           if (editorRef.current) {
             editorRef.current.innerHTML = "";
-            setInstructionsHtml(""); // Only update when explicitly clearing
+            setInstructionsHtml("");
           }
         }}
       >
         <Trash2 className="h-5 w-5 text-red-500" />
       </button>
     </div>
-    {/* ──────────────────────────────────────────────────────────────────────── */}
 
-    {/* ─── contentEditable DIV ───────────────────────────────────────────────── */}
     <div
       ref={editorRef}
       contentEditable
       className="min-h-[150px] w-full resize-none border-0 p-2 text-sm focus:outline-none"
-      // Only initialize innerHTML once when the component (or “edit” mode) mounts:
-      // Do NOT bind `dangerouslySetInnerHTML` on every render, or the caret will jump.
-      // Instead, call this from useEffect (shown below).
     />
-    {/* ──────────────────────────────────────────────────────────────────────── */}
   </div>
 </div>
 
 
-              {/* ─ Add “Attach Image” and “Attach Folder” ────────────────────────────── */}
+              {/*attach file */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {/* Attach a single image */}
+                {/*image*/}
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
                     Attach Image
@@ -482,7 +478,7 @@ export default function TeacherAssignmentDetail() {
                   )}
                 </div>
 
-                {/* Attach entire folder */}
+                {/*folder*/}
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
                     Attach Folder
@@ -505,7 +501,7 @@ export default function TeacherAssignmentDetail() {
                 </div>
               </div>
 
-              {/* Buttons & Visibility */}
+              {/*visibility button*/}
               <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                   <button
@@ -568,9 +564,6 @@ export default function TeacherAssignmentDetail() {
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────────────────
-  // ─── RENDER “VIEW” MODE ────────────────────────────────────────────────────────
-  // ────────────────────────────────────────────────────────────────────────────────
   return (
     <div className="flex min-h-screen bg-[#f4f9fc]">
       <SideBarTeacher />
@@ -614,17 +607,11 @@ export default function TeacherAssignmentDetail() {
                 <ClockIcon className="h-4 w-4" />
                 <span>Status: {assignment.status}</span>
               </div>
-              {assignment.grade && (
-                <div className="flex items-center gap-1">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>Grade: {assignment.grade}</span>
-                </div>
-              )}
             </div>
 
-            {/* Main Content */}
+            {/*main content*/}
             <div className="grid grid-cols-1 gap-6">
-              {/* Assignment Details */}
+              {/*details*/}
               <div>
                 <div className="rounded-lg border bg-white p-6 shadow-sm">
                   <h2 className="text-xl font-bold text-gray-800 mb-4">
@@ -635,7 +622,7 @@ export default function TeacherAssignmentDetail() {
                     dangerouslySetInnerHTML={{ __html: assignment.instructions }}
                   />
 
-                  {/* Student Submissions */}
+                  {/*student submission*/}
                   <div className="mt-8">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">
                       Student Submissions
@@ -646,108 +633,116 @@ export default function TeacherAssignmentDetail() {
                           No submissions yet.
                         </div>
                       )}
-                      {submissionHistory.map((sub) => (
-                        <div
-                          key={sub.id}
-                          className="rounded-lg border p-4 hover:bg-gray-50 flex flex-col gap-2"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <FileText className="h-5 w-5 text-blue-500" />
-                              <div>
-                                <h4 className="font-medium text-gray-800">
-                                  {sub.studentName} — {sub.file}
-                                </h4>
-                                <p className="text-sm text-gray-500">
-                                  Submitted on {sub.date}
-                                </p>
+                        {submissionHistory.map((sub) => (
+                          <div key={sub.id} className="rounded-lg border p-4 hover:bg-gray-50">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <FileText className="h-5 w-5 text-blue-500" />
+                                <div>
+                                  <h4 className="font-medium text-gray-800">
+                                    {sub.studentName} — {sub.file}
+                                  </h4>
+                                  <p className="text-sm text-gray-500">
+                                    Submitted on {sub.date}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              {sub.status === "graded" ? (
-                                <>
-                                  <span className="text-sm font-medium text-green-600">
-                                    Grade: {sub.grade}
-                                  </span>
-                                  {sub.feedback && (
-                                    <button
-                                      onClick={() =>
-                                        setFeedbackMap((prev) => ({
-                                          ...prev,
-                                          [sub.id]: sub.feedback,
-                                        }))
-                                      }
-                                      className="p-2 text-gray-500 hover:text-gray-700"
-                                    >
-                                      <MessageSquare className="h-5 w-5" />
-                                    </button>
-                                  )}
-                                </>
-                              ) : (
-                                <span className="text-sm text-gray-500">
-                                  Pending review
+                              <div className="flex items-center gap-4">
+                              {sub.grade && (
+                                <span className="text-sm font-medium text-gray-700">
+                                  Grade: {sub.grade}
                                 </span>
                               )}
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setActiveSubmission(sub);
+                                  setGradeInput(sub.grade || "");
+                                  setFeedbackInput(sub.feedback || "");
+                                  setShowSubmissionModal(true);
+                                }}
+                                className="rounded-md bg-indigo-600 px-3 py-1 text-sm font-medium text-white hover:bg-indigo-700"
+                              >
+                                Review
+                              </button>
                             </div>
                           </div>
-
-                          {/* Inline feedback (if any) */}
-                          {feedbackMap[sub.id] && (
-                            <div className="mt-3 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
-                              <p className="font-medium text-gray-800">
-                                Feedback:
-                              </p>
-                              <p className="mt-1">{sub.feedback}</p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                        ))}
                     </div>
                   </div>
                 </div>
-
-                {/* “Preview Student Submission” panel */}
-                <div className="mt-6 rounded-lg border bg-white p-6 shadow-sm">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    Preview Student Submission
-                  </h3>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      <label className="flex-1">
-                        <div className="flex items-center justify-center w-full">
-                          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                            <Upload className="w-8 h-8 mb-2 text-gray-500" />
-                            <p className="mb-2 text-sm text-gray-500">
-                              <span className="font-semibold">Click to upload</span> or drag and drop
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              PDF, DOC, DOCX (MAX. 10MB)
-                            </p>
-                            <input
-                              type="file"
-                              className="hidden"
-                              onChange={handleFileChange}
-                              accept=".pdf,.doc,.docx"
-                            />
-                          </label>
-                        </div>
-                      </label>
-                    </div>
-                    {selectedFile && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <FileText className="h-4 w-4" />
-                        <span>{selectedFile.name}</span>
-                      </div>
-                    )}
-                    <button
-                      type="submit"
-                      disabled={!selectedFile || isSubmitting}
-                      className="w-full rounded-lg bg-blue-500 px-4 py-2 text-center text-sm font-medium text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                {showSubmissionModal && (
+                  <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                    onClick={() => setShowSubmissionModal(false)}
+                  >
+                    <div
+                      className="bg-white rounded-lg p-6 w-full max-w-md"
+                      onClick={e => e.stopPropagation()}
                     >
-                      {isSubmitting ? "Submitting…" : "Submit Sample"}
-                    </button>
-                  </form>
-                </div>
+                      <h3 className="text-lg font-semibold mb-4">Review Submission</h3>
+
+                      <p className="font-medium">File:</p>
+                      <a
+                        href={`path/to/uploads/${activeSubmission.file}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline mb-4 block"
+                      >
+                        View Attached File
+                      </a>
+
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700">Grade</label>
+                        <input
+                          type="text"
+                          value={gradeInput}
+                          onChange={e => setGradeInput(e.target.value)}
+                          className="mt-1 w-full rounded-md border border-gray-300 p-2 text-sm"
+                        />
+                      </div>
+
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700">Feedback</label>
+                        <textarea
+                          rows={3}
+                          value={feedbackInput}
+                          onChange={e => setFeedbackInput(e.target.value)}
+                          className="mt-1 w-full rounded-md border border-gray-300 p-2 text-sm"
+                        />
+                      </div>
+
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setShowSubmissionModal(false)}
+                          className="rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => {
+                            // update your submissionHistory and feedbackMap here:
+                            setSubmissionHistory(prev =>
+                              prev.map(s =>
+                                s.id === activeSubmission.id
+                                  ? { ...s, status: "graded", grade: gradeInput, feedback: feedbackInput }
+                                  : s
+                              )
+                            );
+                            setFeedbackMap(prev => ({
+                              ...prev,
+                              [activeSubmission.id]: feedbackInput
+                            }));
+                            setShowSubmissionModal(false);
+                          }}
+                          className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -90,11 +90,17 @@ function App() {
           }
         />
         <Route path="/teacher/courses" element={<TeacherCoursesPage />} />
+        <Route path="/teacher/courses/:courseId/lessons/:lessonId" element={<LessonDetail />} />
         <Route path="/teacher/schedule"  element={<Schedule />} />
         <Route path="/teacher/ai-assistant" element={<AlAssistantPage />} />
         <Route path="/teacher/courses/:courseId" element={<TeacherCourseDetail />} />
         <Route path="/teacher/courses/:courseId/modules/new" element={<NewModulePage />} />
         <Route path="/teacher/courses/:courseId/assignments/:assignmentId" element={<TeacherAssignmentDetail />} />
+        <Route
+          path="/teacher/courses/:courseId/assignments/:assignmentId/edit"
+          element={<TeacherAssignmentDetail />}
+        />
+
         <Route
           path="/teacher/courses/:courseId/resources/:resourceId"
           element={<TeacherResourceDetail />}

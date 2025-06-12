@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import SideBarStudent from "../components/layout/SideBarStudent";
+import SideBarTeacher from "@/components/layout/SideBarTeacher";
 import NavBar from "../components/layout/NavBar";
 import {
   ArrowLeft,
@@ -15,6 +17,8 @@ const allCourses = [...currentCourses, ...completedCourses];
 
 const LessonDetail = () => {
   const { courseId, lessonId } = useParams();
+  const location   = useLocation();
+  const isTeacher  = location.pathname.startsWith("/teacher/");
   const [lesson, setLesson] = useState(null);
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +43,7 @@ const LessonDetail = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen bg-[#f4f9fc]">
-        <SideBarStudent />
+        {isTeacher ? <SideBarTeacher /> : <SideBarStudent />}
         <div className="flex-1 flex flex-col h-screen">
           <div className="flex-1 overflow-auto">
             <div className="mx-auto max-w-7xl px-4 py-6">
@@ -61,7 +65,7 @@ const LessonDetail = () => {
   if (!course || !lesson) {
     return (
       <div className="flex min-h-screen bg-[#f4f9fc]">
-        <SideBarStudent />
+        {isTeacher ? <SideBarTeacher /> : <SideBarStudent />}
         <div className="flex-1 flex flex-col h-screen">
           <div className="flex-1 overflow-auto">
             <div className="mx-auto max-w-7xl px-4 py-6">
@@ -91,7 +95,7 @@ const LessonDetail = () => {
 
   return (
     <div className="flex min-h-screen bg-[#f4f9fc]">
-      <SideBarStudent />
+      {isTeacher ? <SideBarTeacher /> : <SideBarStudent />}
       <div className="flex-1 flex flex-col h-screen">
         <div className="flex-1 overflow-auto">
           <div className="mx-auto max-w-7xl px-4 py-6">
@@ -99,8 +103,8 @@ const LessonDetail = () => {
             
             {/* Lesson Header */}
             <div className="mb-6">
-              <Link
-                to={`/student/courses/${courseId}`}
+              <Link 
+                to={`${isTeacher ? "/teacher" : "/student"}/courses/${courseId}`}
                 className="inline-flex items-center gap-2 text-gray-600 hover:text-[#1f53f3]"
               >
                 <ArrowLeft className="h-5 w-5" />
