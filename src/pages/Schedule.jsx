@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import SideBarTeacher from "@/components/layout/SideBarTeacher";
 import SideBarStudent from "../components/layout/SideBarStudent";
 import NavBar from "../components/layout/NavBar";
 import {
@@ -52,6 +54,9 @@ export default function Schedule() {
   const [tasks, setTasks] = useState(initialTasks);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+
+  const location = useLocation();
+  const isTeacher = location.pathname.startsWith("/teacher/");
 
   // Update current time every minute
   useEffect(() => {
@@ -219,7 +224,7 @@ export default function Schedule() {
 
   return (
     <div className="flex min-h-screen bg-[#f4f9fc]">
-      <SideBarStudent />
+      {isTeacher ? <SideBarTeacher /> : <SideBarStudent />}
 
       {/* Main content */}
       <div className="flex-1 flex flex-col h-screen">

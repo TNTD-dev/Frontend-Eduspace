@@ -4,7 +4,7 @@ import {
   Home,
   BookOpen,
   CalendarDays,
-  Users,
+  Bot,
   Settings,
   LogOut
 } from 'lucide-react';
@@ -14,10 +14,10 @@ const SideBarTeacher = () => {
   const location = useLocation();
 
   const navItems = [
-    { icon: Home, label: "Dashboard", href: "/teacher/dashboard" },
+    { icon: Home, label: "Home", href: "/teacher/dashboard" },
     { icon: BookOpen, label: "Courses", href: "/teacher/courses" },
     { icon: CalendarDays, label: "Schedule", href: "/teacher/schedule" },
-    { icon: Users, label: "Community", href: "/teacher/community" }
+    { icon: Bot, label: "AI Assistant", href: "/teacher/ai-assistant" }
   ];
 
   const bottomNavItems = [

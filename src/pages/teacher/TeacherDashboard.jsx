@@ -6,6 +6,7 @@ import CalendarCard from "@/components/CalendarCard";
 import TeacherAssignmentCard from "@/components/TeacherAssignmentCard";
 import ActivityChart from "@/components/ActivityChart";
 import { currentCourses } from "@/data/mock/courseData";
+import {Clock, Users, Star, TrendingUp} from "lucide-react";
 
 export default function TeacherDashboard() {
   const activeCourseCount = currentCourses.length;
@@ -62,23 +63,35 @@ export default function TeacherDashboard() {
                       </div>
 
                       <div className="space-y-4 text-sm text-[#303345]">
-                        <div className="flex justify-between">
-                          <span className="font-medium">👨‍🎓 Total Students</span>
-                          <span>42</span>
+                      <div className="flex justify-between">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-gray-500" />
+                          <span className="font-medium">Total Students</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium">⭐ Most Active</span>
-                          <span>Nguyen Van A</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium">⏱ Lessons this week</span>
-                          <span>12</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium">📈 Avg. Progress</span>
-                          <span>58%</span>
-                        </div>
+                        <span>42</span>
                       </div>
+                      <div className="flex justify-between">
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-gray-500" />
+                          <span className="font-medium">Most Active</span>
+                        </div>
+                        <span>Nguyen Van A</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-gray-500" />
+                          <span className="font-medium">Lessons this week</span>
+                        </div>
+                        <span>12</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4 text-gray-500" />
+                          <span className="font-medium">Avg. Progress</span>
+                        </div>
+                        <span>58%</span>
+                      </div>
+                    </div>
 
                       <div className="mt-6">
                         <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">

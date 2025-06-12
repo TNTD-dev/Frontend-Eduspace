@@ -301,6 +301,7 @@ export const currentCourses = [
     categoryColor: "bg-[#1cd767]",
     progress: 22,
     total: 36,
+    studentCount: 46,
     image: "/cover/cover-computer-vision.jpg",
     instructor: "Duc Tran",
     description: "This course is designed to introduce students to the fundamentals of computer vision. It covers topics such as image processing, computer vision algorithms, and computer vision applications.",
@@ -464,6 +465,7 @@ export const currentCourses = [
     categoryColor: "bg-[#1cd767]",
     progress: 10,
     total: 100,
+    studentCount: 52,
     image: "/cover/cover-computational-thinking.jpg",
     instructor: "Duc Tran",
     description: "This course introduces students to computational thinking concepts and problem-solving techniques. It covers algorithmic thinking, pattern recognition, abstraction, and decomposition.",
@@ -630,6 +632,7 @@ export const completedCourses = [
     categoryColor: "bg-[#1cd767]",
     progress: 36,
     total: 36,
+    studentCount: 47,
     image: "/cover/cover-daa.jpg",
     instructor: "Duc Tran",
     description: "Advanced course covering algorithm design techniques, complexity analysis, and optimization strategies. Students learn to design efficient algorithms and analyze their performance.",
@@ -769,6 +772,7 @@ export const completedCourses = [
     categoryColor: "bg-[#1cd767]",
     progress: 50,
     total: 50,
+    studentCount: 43,
     image: "/cover/cover-nlp.jpg",
     instructor: "Duc Tran",
     description: "Comprehensive course on NLP fundamentals, including text processing, language models, and machine learning applications in natural language understanding.",
@@ -902,3 +906,9 @@ export const completedCourses = [
     }
   }
 ]; 
+
+export const myCourses = currentCourses.filter(course => course.progress > 0 && course.progress < course.total);
+
+export const draftCourses = currentCourses.filter(course => course.progress === 0);
+
+export const archivedCourses = [...completedCourses];
