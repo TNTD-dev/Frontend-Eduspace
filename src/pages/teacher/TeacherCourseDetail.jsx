@@ -207,14 +207,12 @@ export default function TeacherCourseDetail() {
   const handleEditModule = (moduleId) => {
     const mod = modulesState.find((m) => m.id === moduleId);
     if (!mod) return;
-    const newTitle = prompt("Edit module title:", mod.title);
-    if (!newTitle?.trim()) return;
-    setModulesState((prev) =>
-      prev.map((m) =>
-        m.id === moduleId ? { ...m, title: newTitle.trim() } : m
-      )
+    navigate(
+      `/teacher/courses/${courseId}/modules/${moduleId}/edit`,
+      { state: { fromModule: mod } }
     );
   };
+
 
   const handleDeleteModule = (moduleId) => {
     if (
@@ -839,18 +837,19 @@ export default function TeacherCourseDetail() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleEditLesson(mod.id, lesson.id);
+                              handleEditModule(mod.id);
                             }}
                             className="rounded-full p-1 hover:bg-gray-200 transition-colors"
                           >
                             <Edit2 className="h-5 w-5 text-gray-500" />
                           </button>
+
                           <button
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation();
-                              handleDeleteLesson(mod.id, lesson.id);
+                              handleDeleteModule(mod.id);
                             }}
-                            className="rounded-full p-1 hover:bg-gray-200 transition-colors"
+                            className="p-1 hover:bg-gray-200 rounded-full"
                           >
                             <Trash2 className="h-5 w-5 text-red-500" />
                           </button>
