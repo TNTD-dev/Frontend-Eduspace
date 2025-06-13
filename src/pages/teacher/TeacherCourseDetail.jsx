@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import SideBarTeacher from "@/components/layout/SideBarTeacher";
 import EditableCourseHeader from "@/components/EditableCourseHeader";
+import LessonModal from "@/pages/teacher/LessonModal";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   ArrowLeft,
@@ -55,6 +56,10 @@ export default function TeacherCourseDetail() {
   const [draftLocation, setDraftLocation] = useState("");
 
   const [isNewDiscussionOpen, setIsNewDiscussionOpen] = useState(false);
+
+  const [lessonModalOpen, setLessonModalOpen] = useState(false);
+  const [editingLesson, setEditingLesson] = useState(null);
+
 
   const [modulesState, setModulesState] = useState([]);
   const [expandedModules, setExpandedModules] = useState({});
@@ -238,40 +243,40 @@ export default function TeacherCourseDetail() {
     });
   };
 
-  const handleEditLesson = (moduleId, lessonId) => {
-    const mod = modulesState.find((m) => m.id === moduleId);
-    if (!mod) return;
-    const lesson = mod.lessons.find((l) => l.id === lessonId);
-    if (!lesson) return;
-    const newTitle = prompt("Edit lesson title:", lesson.title);
-    if (!newTitle?.trim()) return;
-    const newDuration = prompt("Edit lesson duration:", lesson.duration);
-    if (!newDuration?.trim()) return;
-    setModulesState((prev) =>
-      prev.map((m) => {
-        if (m.id !== moduleId) return m;
-        return {
-          ...m,
-          lessons: m.lessons.map((l) =>
-            l.id === lessonId
-              ? { ...l, title: newTitle.trim(), duration: newDuration.trim() }
-              : l
-          )
-        };
-      })
-    );
-  };
+ const handleEditLesson = (moduleId, lessonId) => {
+   const mod = modulesState.find(m => m.id === moduleId);
+   const lesson = mod?.lessons.find(l => l.id === lessonId);
+   if (!lesson) return;
+   setEditingLesson({ moduleId, ...lesson });
+   setLessonModalOpen(true);
+ };
 
-  const handleDeleteLesson = (moduleId, lessonId) => {
-    if (!window.confirm("Delete this lesson?")) return;
-    setModulesState((prev) =>
-      prev.map((m) =>
-        m.id === moduleId
-          ? { ...m, lessons: m.lessons.filter((l) => l.id !== lessonId) }
-          : m
-      )
-    );
-  };
+ // Delete inline
+ const handleDeleteLesson = (moduleId, lessonId) => {
+   if (!confirm("Delete this lesson?")) return;
+   setModulesState(prev =>
+     prev.map(m =>
+       m.id === moduleId
+         ? { ...m, lessons: m.lessons.filter(l => l.id !== lessonId) }
+         : m
+     )
+   );
+ };
+
+ // Called when the modal’s Save button is clicked
+ const handleSaveLesson = updated => {
+   setModulesState(prev =>
+     prev.map(m =>
+       m.id !== updated.moduleId
+         ? m
+         : {
+             ...m,
+             lessons: m.lessons.map(l => (l.id === updated.id ? updated : l))
+           }
+     )
+   );
+ };
+
 
   const moveLesson = (moduleId, lessonId, direction) => {
     setModulesState((prev) =>
@@ -290,6 +295,7 @@ export default function TeacherCourseDetail() {
       })
     );
   };
+
 
   //save about and details
   const saveAbout = () => {
@@ -833,7 +839,7 @@ export default function TeacherCourseDetail() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleEditModule(mod.id);
+                              handleEditLesson(mod.id, lesson.id);
                             }}
                             className="rounded-full p-1 hover:bg-gray-200 transition-colors"
                           >
@@ -842,7 +848,7 @@ export default function TeacherCourseDetail() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteModule(mod.id);
+                              handleDeleteLesson(mod.id, lesson.id);
                             }}
                             className="rounded-full p-1 hover:bg-gray-200 transition-colors"
                           >
@@ -866,19 +872,18 @@ export default function TeacherCourseDetail() {
                               className="flex items-center justify-between p-4 hover:bg-gray-50"
                             >
                               <div className="flex items-center gap-3">
-                                <div className="rounded-full bg-gray-100 p-2 text-gray-500">
-                                  {lesson.completed ? (
-                                    <CheckCircle className="h-4 w-4 text-green-500" />
-                                  ) : (
-                                    <Play className="h-4 w-4" />
-                                  )}
-                                </div>
+                              {lesson.fileObject?.type.startsWith("video/") ? (
+                                  <Play className="h-5 w-5 text-blue-500" />
+                                ) : (
+                                  <FileText className="h-5 w-5 text-gray-500" />
+                                )}
                                 <div>
-                                  <h4 className="font-medium text-gray-800">
-                                    {lesson.title}
-                                  </h4>
+                                  <h4 className="font-medium">{lesson.title}</h4>
+                                  {/* description: time for video, description text otherwise */}
                                   <p className="text-sm text-gray-500">
-                                    {lesson.duration}
+                                    {lesson.fileObject?.type.startsWith("video/")
+                                      ? lesson.duration
+                                      : lesson.description || "No description"}
                                   </p>
                                 </div>
                               </div>
@@ -1461,6 +1466,13 @@ export default function TeacherCourseDetail() {
         onClose={() => setIsNewDiscussionOpen(false)}
         onSubmit={handleNewDiscussion}
       />
+                 <LessonModal
+             isOpen={lessonModalOpen}
+             onClose={() => setLessonModalOpen(false)}
+             initialData={editingLesson}
+             onSave={handleSaveLesson}
+           />
+
     </div>
     </div>
   );
