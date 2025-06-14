@@ -9,20 +9,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Progress } from "@/components/ui/progress";
+
 
 const ReviewCards = ({ cards, onStartReview, onDeleteCard }) => {
+  // Group cards by cardSetTitle only
   const [groupedCards, setGroupedCards] = useState({});
-  const [progress, setProgress] = useState(0);
-
-  // Group cards by deck and card set
+  
   useEffect(() => {
     const grouped = cards.reduce((acc, card) => {
-      const key = `${card.deckId}-${card.cardSetTitle}`;
+      const key = card.cardSetTitle || "No Title";
       if (!acc[key]) {
         acc[key] = {
-          deckId: card.deckId,
-          deckName: card.deckName,
           cardSetTitle: card.cardSetTitle,
           cards: []
         };
@@ -33,14 +30,7 @@ const ReviewCards = ({ cards, onStartReview, onDeleteCard }) => {
     setGroupedCards(grouped);
   }, [cards]);
 
-  // Calculate progress
-  useEffect(() => {
-    const totalCards = cards.length;
-    const reviewedCards = cards.filter(card => 
-      card.studyHistory && card.studyHistory.length > 0
-    ).length;
-    setProgress((reviewedCards / totalCards) * 100);
-  }, [cards]);
+  
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -61,39 +51,25 @@ const ReviewCards = ({ cards, onStartReview, onDeleteCard }) => {
 
   return (
     <div className="space-y-6">
-      {/* Progress Bar */}
-      <div className="bg-white rounded-lg p-4 shadow">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="text-sm font-medium text-gray-700">Review Progress</h3>
-          <span className="text-sm text-gray-500">{Math.round(progress)}%</span>
-        </div>
-        <Progress value={progress} className="h-2" />
-      </div>
-
-      {/* Card Groups */}
+      {/* Card Groups by Title */}
       {Object.entries(groupedCards).map(([key, group]) => (
         <div key={key} className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div>
-                  <h3 className="font-medium text-[#303345]">{group.cardSetTitle}</h3>
-                  <p className="text-sm text-gray-500">{group.deckName}</p>
-                </div>
-                <Badge variant="outline" className="bg-blue-50">
-                  {group.cards.length} cards
-                </Badge>
-              </div>
-              <Button
-                size="sm"
-                className="bg-blue-500 hover:bg-blue-600"
-                onClick={() => onStartReview(group.deckId)}
-              >
-                Study Now
-              </Button>
+          <div className="px-4 py-3 border-b flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <h3 className="font-medium text-[#303345]">{group.cardSetTitle || "No Title"}</h3>
+              <Badge variant="outline" className="bg-blue-50">
+                {group.cards.length} cards
+              </Badge>
             </div>
+            <Button
+              size="sm"
+              className="bg-blue-500 hover:bg-blue-600"
+              onClick={() => onStartReview(group.cards[0]?.deckId, group.cardSetTitle)}
+              disabled={group.cards.length === 0}
+            >
+              Study Now
+            </Button>
           </div>
-
           <div className="p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {group.cards.map((card) => (
@@ -111,24 +87,16 @@ const ReviewCards = ({ cards, onStartReview, onDeleteCard }) => {
                   >
                     {card.status === "due" ? "Due" : "New"}
                   </Badge>
-                  
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-[#303345] truncate">{card.question}</p>
-                    {card.studyHistory && card.studyHistory.length > 0 && (
-                      <p className={`text-xs ${getPerformanceColor(card.studyHistory[0].performance)}`}>
-                        Last review: {formatDate(card.studyHistory[0].date)}
-                      </p>
-                    )}
                   </div>
-
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <Clock className="h-3.5 w-3.5" />
-                      <span title={`Last review: ${card.lastReviewDate || 'Never'}`}>
-                        {formatDate(card.nextReviewDate)}
+                      <span title={`Next review: ${card.nextReview ? new Date(card.nextReview).toLocaleString() : 'Never'}`}>
+                        {card.nextReview ? formatDate(card.nextReview) : '-'}
                       </span>
                     </div>
-
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -156,7 +124,6 @@ const ReviewCards = ({ cards, onStartReview, onDeleteCard }) => {
           </div>
         </div>
       ))}
-
       {cards.length === 0 && (
         <div className="text-center py-12 bg-white rounded-lg shadow">
           <p className="text-gray-500 mb-4">No cards due for review today</p>

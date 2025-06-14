@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react' 
-import { motion } from 'framer-motion'
+import { motion, animate } from 'framer-motion'
 
 /**
  * @typedef {Object} CircularProgressProps
@@ -17,14 +17,24 @@ import { motion } from 'framer-motion'
 
 const CircularProgress = ({ value, maxValue, color, label }) => {
     const [percentage, setPercentage] = useState(0)
+    const [displayValue, setDisplayValue] = useState(0)
+
     useEffect(() => {
         setPercentage((value / maxValue) * 100)
-      }, [value, maxValue])
+        // Animate số ở giữa
+        const controls = animate(displayValue, value, {
+            duration: 1,
+            ease: "easeInOut",
+            onUpdate: v => setDisplayValue(Math.round(v))
+        })
+        return controls.stop
+        // eslint-disable-next-line
+    }, [value, maxValue])
 
-      const radius = 40
-      const strokeWidth = 12
-      const circumference = 2 * Math.PI * radius
-      const strokeDashoffset = circumference - (percentage / 100) * circumference
+    const radius = 40
+    const strokeWidth = 12
+    const circumference = 2 * Math.PI * radius
+    const strokeDashoffset = circumference - (percentage / 100) * circumference
     
   return (
     <div className="flex flex-col items-center">
@@ -60,7 +70,7 @@ const CircularProgress = ({ value, maxValue, color, label }) => {
         </svg>
         {/* Number in center */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl font-extrabold" style={{ color }}>{value}</span>
+          <span className="text-xl font-extrabold" style={{ color }}>{displayValue}</span>
           <span className="text-xs text-slate-400 font-semibold">/ {maxValue}</span>
         </div>
       </div>

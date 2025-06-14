@@ -18,11 +18,16 @@ import GoogleSuccess from "@/pages/common/GoogleSuccess";
 import PomodoroPage from "@/pages/student/pomodoro/PomodoroPage";
 import AlAssistantPage from "@/pages/student/aiassistant/AlAssistantPage";
 import SettingPage from "@/pages/common/SettingPage";
-//temporary
-import SideBarStudent from "@/components/layout/SideBarStudent";
-import NavBar from "@/components/layout/NavBar";
+import TeacherDashboard from "@/pages/teacher/dashboard/TeacherDashboard";
+import TeacherCoursesPage from "@/pages/teacher/courses/TeacherCoursesPage";
+import TeacherCourseDetail from "@/pages/teacher/courses/TeacherCourseDetail";
+import TeacherAssignmentDetail from "@/pages/teacher/courses/TeacherAssignmentDetail";
+import TeacherResourceDetail from "@/pages/teacher/courses/TeacherResourceDetail";
+import NewModulePage from "@/pages/teacher/courses/NewModulePage";
+import NewCoursePage from "@/pages/teacher/courses/NewCoursePage";
 
 // Protected Route component
+
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, userRole } = useAuth();
 
@@ -36,23 +41,6 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   return children;
 };
-
-// Demo Teacher Dashboard placeholder
-const TeacherDashboard = () => (
-  <div className="flex min-h-screen bg-[#f4f9fc]">
-      <SideBarStudent />
-  <div className="flex-1 flex flex-col h-screen">
-  <div className="flex-1 overflow-auto">
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      {/* Header */}
-      <NavBar />
-      <h1>Teacher Dashboard</h1>
-      </div>
-      </div>
-      </div>
-      </div>
-      
-);
 
 function App() {
   return (
@@ -163,8 +151,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
-        
+
         {/* Teacher routes */}
         <Route
           path="/teacher/dashboard"
@@ -174,6 +161,90 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/teacher/courses"
+          element={
+            <ProtectedRoute requiredRole="teacher">
+              <TeacherCoursesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/courses/:courseId"
+          element={
+            <ProtectedRoute requiredRole="teacher">
+              <TeacherCourseDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/teacher/courses/new"
+          element={
+            <ProtectedRoute requiredRole="teacher">
+              <NewCoursePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/courses/:courseId/edit"
+          element={
+            <ProtectedRoute requiredRole="teacher">
+              <NewCoursePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/teacher/courses/:courseId/assignments/:assignmentId"
+          element={
+            <ProtectedRoute requiredRole="teacher">
+              <TeacherAssignmentDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/courses/:courseId/resources/:resourceId"
+          element={
+            <ProtectedRoute requiredRole="teacher">
+              <TeacherResourceDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/courses/:courseId/modules/new"
+          element={
+            <ProtectedRoute requiredRole="teacher">
+              <NewModulePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/courses/:courseId/discussions/:discussionId"
+          element={
+            <ProtectedRoute requiredRole="teacher">
+              <DiscussionDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/schedule"
+          element={
+            <ProtectedRoute requiredRole="teacher">
+              <Schedule />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/ai-assistant"
+          element={
+            <ProtectedRoute requiredRole="teacher">
+              <AlAssistantPage />
+            </ProtectedRoute>
+          }
+        />
+
+
       </Routes>
     </AuthProvider>
   );

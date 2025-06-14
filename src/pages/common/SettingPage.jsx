@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react'
 import SideBarStudent from '@/components/layout/SideBarStudent'
+import SideBarTeacher from '@/components/layout/SideBarTeacher'
 import NavBar from '@/components/layout/NavBar'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -8,6 +9,7 @@ import { Card } from '@/components/ui/card'
 import { userData } from '@/data/mock/userData'
 import { Facebook, Github, CircleUser, Mail, Bell, Globe, MapPin, User, Lock, Share2, Trash2 } from 'lucide-react'
 import { FcGoogle } from "react-icons/fc"
+import { useAuth } from '@/context/AuthContext'
 
 const menuItems = [
   { label: 'Profile', icon: <User className="w-5 h-5" /> },
@@ -19,6 +21,7 @@ const menuItems = [
 ]
 
 const SettingPage = () => {
+  const { userRole } = useAuth();
   const [profile, setProfile] = useState(userData.profile)
   const [selectedTab, setSelectedTab] = useState(0)
   const fileInputRef = useRef(null)
@@ -349,7 +352,7 @@ const SettingPage = () => {
 
   return (
     <div className="flex min-h-screen bg-[#f4f9fc]">
-      <SideBarStudent />
+      {userRole === 'teacher' ? <SideBarTeacher /> : <SideBarStudent />}
       <div className="flex-1 flex flex-col h-screen">
         <div className="flex-1 overflow-auto">
           <div className="mx-auto max-w-7xl px-4 py-6">

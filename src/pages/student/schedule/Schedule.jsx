@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import SideBarStudent from "@/components/layout/SideBarStudent";
+import SideBarTeacher from "@/components/layout/SideBarTeacher";
 import NavBar from "@/components/layout/NavBar";
+import { useAuth } from "@/context/AuthContext";
 import {
   addDays,
   addWeeks,
@@ -29,6 +31,7 @@ import { scheduleAPI, tagsAPI } from "@/api";
 import { toast } from "sonner";
 
 export default function Schedule() {
+  const { userRole } = useAuth();
   // Current date state
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -120,12 +123,15 @@ export default function Schedule() {
 
   const handleToday = () => {
     const today = new Date();
-    setCurrentDate(today);
-
+    
     if (viewType === VIEW_TYPES.WEEK) {
+      // Get the current day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
       const currentDay = today.getDay();
-      const diff = today.getDate() - currentDay;
-      const monday = new Date(today.setDate(diff));
+      // Calculate days to subtract to get to Monday (1)
+      const daysToSubtract = currentDay === 0 ? 6 : currentDay - 1;
+      // Create a new date for Monday
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - daysToSubtract);
       setCurrentDate(monday);
     } else if (viewType === VIEW_TYPES.MONTH) {
       const firstDayOfMonth = new Date(
@@ -134,6 +140,8 @@ export default function Schedule() {
         1
       );
       setCurrentDate(firstDayOfMonth);
+    } else {
+      setCurrentDate(today);
     }
   };
 
@@ -253,7 +261,7 @@ export default function Schedule() {
 
   return (
     <div className="flex min-h-screen bg-[#f4f9fc]">
-      <SideBarStudent />
+      {userRole === 'teacher' ? <SideBarTeacher /> : <SideBarStudent />}
 
       {/* Main content */}
       <div className="flex-1 flex flex-col h-screen">

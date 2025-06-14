@@ -12,8 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import SideBarStudent from "@/components/layout/SideBarStudent";
 import NavBar from "@/components/layout/NavBar";
-import { mockDecks } from "@/data/mock/deckData";
-import { mockCards } from "@/data/mock/cardData";
+import { flashcardAPI } from "@/api";
+import { toast } from "sonner";
 
 export default function CreateCards() {
   const navigate = useNavigate();
@@ -24,8 +24,26 @@ export default function CreateCards() {
   ]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [decks, setDecks] = useState([]);
+  const [loading, setLoading] = useState(false);
   const answerInputRef = useRef(null);
+
+  // Fetch decks when component mounts
+  useEffect(() => {
+    fetchDecks();
+  }, []);
+
+  const fetchDecks = async () => {
+    try {
+      setLoading(true);
+      const response = await flashcardAPI.getDecks();
+      setDecks(response.data);
+    } catch (error) {
+      toast.error(error.message || "Failed to fetch decks");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAddCard = () => {
     setCards([
@@ -51,7 +69,7 @@ export default function CreateCards() {
     setCards(newCards);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedDeck) {
       setError("Please select a deck");
       return;
@@ -67,28 +85,44 @@ export default function CreateCards() {
       setError("Please enter at least one valid card");
       return;
     }
-    // Create new cards with mock structure
-    const newCards = validCards.map((card, index) => ({
-      id: `card${mockCards.length + index + 1}`,
-      type: "basic",
-      question: card.question,
-      answer: card.answer,
-      deckId: selectedDeck,
-      cardSetTitle: cardSetTitle,
-      tags: [],
-      status: "new",
-      interval: 0,
-      easeFactor: 2.5,
-      repetitions: 0,
-      imageQ: card.imageQ,
-      imageA: card.imageA,
-    }));
-    // Save cards (here just log to console)
-    console.log("Saving cards:", newCards);
-    setShowSuccess(true);
-    setTimeout(() => {
-      navigate("/student/flashcards");
-    }, 2000);
+
+    try {
+      setLoading(true);
+      setError("");
+
+      // Create cards one by one
+      const createPromises = validCards.map(card => 
+        flashcardAPI.createCard({
+          question: card.question,
+          answer: card.answer,
+          deckId: selectedDeck,
+          cardSetTitle: cardSetTitle,
+          type: "basic",
+          status: "new",
+          interval: 0,
+          easeFactor: 2.5,
+          repetitions: 0,
+          // Handle image uploads if needed
+          imageQ: card.imageQ,
+          imageA: card.imageA,
+        })
+      );
+
+      await Promise.all(createPromises);
+
+      setShowSuccess(true);
+      toast.success("Cards created successfully!");
+      
+      // Navigate back after success
+      setTimeout(() => {
+        navigate("/student/flashcards");
+      }, 2000);
+    } catch (error) {
+      setError(error.message || "Failed to create cards");
+      toast.error(error.message || "Failed to create cards");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleKeyDown = (index, field, e) => {
@@ -151,9 +185,10 @@ export default function CreateCards() {
                     className="rounded-md border border-gray-300 bg-white py-2 px-3 text-[#303345] focus:border-[#1f53f3] focus:outline-none focus:ring-1 focus:ring-[#1f53f3]"
                     value={selectedDeck}
                     onChange={(e) => setSelectedDeck(e.target.value)}
+                    disabled={loading}
                   >
                     <option value="">Select a deck</option>
-                    {mockDecks.map((deck) => (
+                    {decks.map((deck) => (
                       <option key={deck.id} value={deck.id}>{deck.name}</option>
                     ))}
                   </select>
@@ -161,9 +196,10 @@ export default function CreateCards() {
                 <Button
                   onClick={handleSave}
                   className="bg-[#1f53f3] hover:bg-[#1f53f3]/90 text-white"
+                  disabled={loading}
                 >
                   <Save className="h-4 w-4 mr-2" />
-                  Save Cards
+                  {loading ? "Saving..." : "Save Cards"}
                 </Button>
               </div>
             </div>

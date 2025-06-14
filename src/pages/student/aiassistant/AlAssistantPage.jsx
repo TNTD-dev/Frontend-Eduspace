@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import SideBarStudent from "@/components/layout/SideBarStudent";
+import SideBarTeacher from "@/components/layout/SideBarTeacher";
 import NavBar from "@/components/layout/NavBar";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -24,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DocumentInput from "@/components/features/assistant/DocumentInput";
 import SummaryResult from "@/components/features/assistant/SummaryResult";
+import { useAuth } from "@/context/AuthContext";
 
 // Structure for a summary request
 const createSummaryRequest = (content, type, fileName = null) => {
@@ -231,6 +233,7 @@ ${request.summary}
 };
 
 const AlAssistantPage = () => {
+  const { userRole } = useAuth();
   // State management
   const [currentRequest, setCurrentRequest] = useState(null); // Current request
   const [isProcessing, setIsProcessing] = useState(false); // Processing status
@@ -304,7 +307,7 @@ const AlAssistantPage = () => {
 
   return (
     <div className="flex min-h-screen bg-[#f4f9fc]">
-      <SideBarStudent />
+      {userRole === 'teacher' ? <SideBarTeacher /> : <SideBarStudent />}
       <div className="flex-1 flex flex-col h-screen">
         <div className="flex-1 overflow-auto">
           <div className="mx-auto max-w-7xl px-4 py-6">

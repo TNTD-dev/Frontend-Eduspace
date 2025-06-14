@@ -19,16 +19,32 @@ export const AUTH_ENDPOINTS = {
     QUIZZES: (lessonId) => `/lessons/${lessonId}/quizzes`,
   };
   
-  export const QUIZ_ENDPOINTS = {
-    BASE: '/quizzes',
-    BY_ID: (id) => `/quizzes/${id}`,
-    SUBMIT: (id) => `/quizzes/${id}/submit`,
+  export const FLASHCARD_ENDPOINTS = {
+    // Deck endpoints
+    DECKS: '/api/flashcards/decks',
+    DECK_DETAIL: (deckId) => `/api/flashcards/decks/${deckId}`,
+    CREATE_DECK: '/api/flashcards/decks',
+    UPDATE_DECK: (deckId) => `/api/flashcards/decks/${deckId}`,
+    DELETE_DECK: (deckId) => `/api/flashcards/decks/${deckId}`,
+
+    // Card endpoints
+    CARDS_IN_DECK: (deckId) => `/api/flashcards/decks/${deckId}/cards`,
+    CARD_DETAIL: (cardId) => `/api/flashcards/cards/${cardId}`,
+    CREATE_CARD: '/api/flashcards/cards',
+    UPDATE_CARD: (cardId) => `/api/flashcards/cards/${cardId}`,
+    DELETE_CARD: (cardId) => `/api/flashcards/cards/${cardId}`,
+
+    // Study endpoints
+    DUE: '/api/flashcards/study/due',
+    DUE_BY_DATE: (date) => `/api/flashcards/study/due/${date}`,
+    STUDY: (cardId) => `/api/flashcards/study/${cardId}`,
+
+    // Group card title endpoints
+    UPDATE_GROUP_TITLE: '/api/flashcards/cards/group-title',
+    DELETE_GROUP_TITLE: (title) => `/api/flashcards/cards/group-title/${title}`,
   };
   
-  export const PROGRESS_ENDPOINTS = {
-    BASE: '/progress',
-    UPDATE: '/progress',
-  };
+ 
 
 export const USER_ENDPOINTS = {
   USER: "/user", // để gọi GET /

@@ -9,6 +9,28 @@ import { cn } from "@/lib/utils"
 import { tagsAPI } from "@/api"
 import { toast } from "sonner"
 
+// Component TagManager handle 3 props
+// open: boolean - whether the dialog is open
+// onOpenChange: function - callback function to handle open state change
+// onTagsChange: function - callback function to handle tags change
+
+/**
+ * Example response:
+ * {
+ *   success: true,
+ *   data: [
+ *     {
+ *       id: 1,
+ *       name: "Study",
+ *       bgColor: "bg-[#3b82f6]/10",
+ *       textColor: "text-[#3b82f6]",
+ *       borderColor: "border-l-[#3b82f6]",
+ *       userId: 1
+ *     }
+ *   ],
+ *   message: "Tags retrieved successfully"
+ * }
+ */
 
 export function TagManager({ open, onOpenChange, onTagsChange }) {
   const [activeTab, setActiveTab] = useState("view")
@@ -30,6 +52,7 @@ export function TagManager({ open, onOpenChange, onTagsChange }) {
     }
   }, [open]);
 
+  // Fetch tags from API
   const fetchTags = async () => {
     try {
       const response = await tagsAPI.getTags();
@@ -42,23 +65,23 @@ export function TagManager({ open, onOpenChange, onTagsChange }) {
       toast.error('Failed to fetch tags');
     }
   };
-
+  
+  // Handle add new tag
   const handleAddNewTag = async () => {
     if (!newTagName.trim()) {
       toast.error("Please enter a tag name");
       return;
     }
-
     try {
       const newTag = {
-        name: newTagName,
-        bgColor: `bg-[${newTagColor}]/10`,
-        textColor: `text-[${newTagColor}]`,
-        borderColor: `border-l-[${newTagColor}]`,
+        name: newTagName, // Tag name from state newTagName
+        bgColor: `bg-[${newTagColor}]/10`, // Tag color from state newTagColor
+        textColor: `text-[${newTagColor}]`, // Tag text color from state newTagColor
+        borderColor: `border-l-[${newTagColor}]`, // Tag border color from state newTagColor
       };
 
       const response = await tagsAPI.createTag(newTag);
-      setTags(prev => [...prev, response.data]);
+      setTags(prev => [...prev, response.data]); // Add new tag of response to end of tags
       if (onTagsChange) {
         onTagsChange([...tags, response.data]);
       }

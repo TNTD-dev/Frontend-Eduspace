@@ -1,8 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SideBarStudent from "@/components/layout/SideBarStudent";
 import NavBar from "@/components/layout/NavBar";
-import { mockCards } from "@/data/mock/cardData";
-import { mockDecks } from "@/data/mock/deckData";
 import CircularProgress from "@/components/common/CircularProgress";
 import SpacedRepetitionChart from "@/components/features/flashcard/SpacedRepetitionChart";
 import {
@@ -16,6 +14,8 @@ import {
   BookOpen,
   Clock,
   Tag,
+  ArrowLeft,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -45,19 +45,147 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import ReviewCards from "@/components/features/flashcard/ReviewCards";
+import { flashcardAPI } from "@/api";
+import { toast } from "sonner";
+import EditDeck from "@/components/features/flashcard/EditDeck";
+import EditCard from "@/components/features/flashcard/EditCard";
+import DeleteCardConfirm from "@/components/features/flashcard/DeleteCardConfirm";
 
 export default function FlashCards() {
   const navigate = useNavigate();
   // State management
   const [searchQuery, setSearchQuery] = useState("");
-  const [decks, setDecks] = useState(mockDecks);
-  const [cards, setCards] = useState(mockCards);
+  const [decks, setDecks] = useState([]);
+  const [cards, setCards] = useState([]);
   const [selectedDeckId, setSelectedDeckId] = useState(null);
   const [isCreatingDeck, setIsCreatingDeck] = useState(false);
   const [newDeckName, setNewDeckName] = useState("");
   const [showBulkSuccess, setShowBulkSuccess] = useState(false);
   const [bulkCardCount, setBulkCardCount] = useState(0);
   const [activeTab, setActiveTab] = useState("decks");
+  const [loading, setLoading] = useState(true);
+  const [allCards, setAllCards] = useState([]);
+  const [selectedTitle, setSelectedTitle] = useState(null);
+  const [editingDeckId, setEditingDeckId] = useState(null);
+  const [editingDeckName, setEditingDeckName] = useState("");
+  const [editingCardId, setEditingCardId] = useState(null);
+  const [editingCardQuestion, setEditingCardQuestion] = useState("");
+  const [editingCardAnswer, setEditingCardAnswer] = useState("");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [editingGroupTitle, setEditingGroupTitle] = useState(null);
+  const [newGroupTitle, setNewGroupTitle] = useState("");
+  const [deletingGroupTitle, setDeletingGroupTitle] = useState(null);
+
+  // Fetch cards when selectedDeckId changes
+  useEffect(() => {
+    setSelectedTitle(null);
+    if (!selectedDeckId || selectedDeckId === "") {
+      setCards(allCards);
+    } else {
+      fetchCards(selectedDeckId);
+    }
+  }, [selectedDeckId, allCards]);
+
+  // Fetch decks and cards on component mount
+  useEffect(() => {
+    fetchDecks();
+    fetchDueCards();
+  }, []);
+
+  // Fetch all cards when component mounts
+  useEffect(() => {
+    fetchAllCards();
+  }, []);
+
+  // Fetch decks
+  const fetchDecks = async () => {
+    try {
+      setLoading(true);
+      const response = await flashcardAPI.getDecks();
+      setDecks(response.data);
+    } catch (error) {
+      toast.error(error.message || "Failed to fetch decks");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch cards for a specific deck
+  const fetchCards = async (deckId) => {
+    try {
+      setLoading(true);
+      const response = await flashcardAPI.getCardsInDeck(deckId);
+      setCards(response?.data || []); // Add fallback to empty array
+    } catch (error) {
+      toast.error(error.message || "Failed to fetch cards");
+      setCards([]); // Set empty array on error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch due cards
+  const fetchDueCards = async () => {
+    try {
+      setLoading(true);
+      console.log("Fetching due cards...");
+      const response = await flashcardAPI.getDueCards();
+      console.log("Due cards response:", response);
+
+      if (response?.data) {
+        setCards(response.data);
+      } else {
+        console.warn("No data in due cards response");
+        setCards([]);
+      }
+    } catch (error) {
+      console.error("Error fetching due cards:", error);
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch due cards"
+      );
+      setCards([]); // Set empty array on error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch all cards from all decks
+  const fetchAllCards = async () => {
+    try {
+      setLoading(true);
+      console.log("Fetching all cards...");
+      const decksResponse = await flashcardAPI.getDecks();
+      const decks = decksResponse.data;
+      console.log("Fetched decks:", decks);
+
+      // Fetch cards for each deck
+      const allCardsPromises = decks.map((deck) =>
+        flashcardAPI.getCardsInDeck(deck.id)
+      );
+
+      const cardsResponses = await Promise.all(allCardsPromises);
+      console.log("Cards responses:", cardsResponses);
+
+      const allCards = cardsResponses.flatMap(
+        (response) => response.data || []
+      );
+      console.log("All cards:", allCards);
+
+      setAllCards(allCards);
+    } catch (error) {
+      console.error("Error fetching all cards:", error);
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch cards"
+      );
+      setAllCards([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter cards based on search query and selected deck
   const filteredCards = cards.filter((card) => {
@@ -71,116 +199,222 @@ export default function FlashCards() {
       card.tags.some((tag) =>
         tag.toLowerCase().includes(searchQuery.toLowerCase())
       );
-
-    const matchesDeck =
-      selectedDeckId === null || card.deckId === selectedDeckId;
-
-    return matchesSearch && matchesDeck;
+    return matchesSearch;
   });
 
   // Handle creating a new deck
-  const handleCreateDeck = () => {
+  const handleCreateDeck = async () => {
     if (newDeckName.trim()) {
-      const newDeck = {
-        id: `deck${decks.length + 1}`,
-        name: newDeckName,
-        cardCount: 0,
-        dueCount: 0,
-        lastStudied: "Never",
-      };
-      setDecks([...decks, newDeck]);
-      setNewDeckName("");
-      setIsCreatingDeck(false);
+      try {
+        const response = await flashcardAPI.createDeck({ name: newDeckName });
+        toast.success("Deck created successfully");
+        setDecks([...decks, response.data]);
+        setNewDeckName("");
+        setIsCreatingDeck(false);
+      } catch (error) {
+        toast.error(error.message || "Failed to create deck");
+      }
     }
   };
 
   // Handle deleting a card
-  const handleDeleteCard = (cardId) => {
-    const cardToDelete = cards.find((card) => card.id === cardId);
-    if (cardToDelete) {
-      setDecks(
-        decks.map((deck) => {
-          if (deck.id === cardToDelete.deckId) {
-            return {
-              ...deck,
-              cardCount: Math.max(0, deck.cardCount - 1),
-              dueCount:
-                cardToDelete.status === "due"
-                  ? Math.max(0, deck.dueCount - 1)
-                  : deck.dueCount,
-            };
-          }
-          return deck;
-        })
-      );
+  const handleDeleteCard = async (cardId) => {
+    try {
+      await flashcardAPI.deleteCard(cardId);
+      toast.success("Card deleted successfully");
+      setCards(cards.filter((card) => card.id !== cardId));
+      // Update deck card count
+      const updatedDecks = decks.map((deck) => {
+        if (deck.id === selectedDeckId) {
+          return {
+            ...deck,
+            cardCount: deck.cardCount - 1,
+          };
+        }
+        return deck;
+      });
+      setDecks(updatedDecks);
+    } catch (error) {
+      toast.error(error.message || "Failed to delete card");
     }
-    setCards(cards.filter((card) => card.id !== cardId));
   };
 
   // Handle deleting a deck
-  const handleDeleteDeck = (deckId) => {
-    setDecks(decks.filter((deck) => deck.id !== deckId));
-    setCards(cards.filter((card) => card.deckId !== deckId));
+  const handleDeleteDeck = async (deckId) => {
+    try {
+      await flashcardAPI.deleteDeck(deckId);
+      toast.success("Deck deleted successfully");
+      setDecks(decks.filter((deck) => deck.id !== deckId));
+      setCards(cards.filter((card) => card.deckId !== deckId));
+    } catch (error) {
+      toast.error(error.message || "Failed to delete deck");
+    }
   };
 
-  // Calculate dashboard statistics
-  const totalCards = cards.length;
-  const dueCards = cards.filter(
+  // Calculate dashboard statistics from all cards
+  const totalCards = allCards.length;
+  const dueCards = allCards.filter(
     (card) => card.status === "due" || card.status === "new"
   ).length;
-  const learnedCards = cards.filter((card) => card.status === "learned").length;
+  const learnedCards = allCards.filter(
+    (card) => card.status === "learned"
+  ).length;
 
   // Calculate retention score
   const calculateRetentionScore = (cards) => {
+    if (!cards || cards.length === 0) return 0;
+
     const weights = {
       learned: 1.0,
       due: 0.5,
       new: 0.2,
     };
+
     const totalWeight = cards.reduce(
-      (sum, card) => sum + weights[card.status],
+      (sum, card) => sum + (weights[card.status] || 0),
       0
     );
+
     const maxPossibleWeight = cards.length * weights.learned;
-    return Math.round((totalWeight / maxPossibleWeight) * 100);
+    return Math.round((totalWeight / maxPossibleWeight) * 100) || 0;
   };
 
-  const retentionScore = calculateRetentionScore(cards);
+  const retentionScore = calculateRetentionScore(allCards);
   const maxRetentionScore = 100;
 
   // Calculate spaced repetition data
   const getSpacedRepetitionData = (cards) => {
-    const intervals = [0, 1, 3, 7, 14, 30, 60];
-    const data = intervals.map((interval) => ({
+    const uniqueIntervals = Array.from(
+      new Set(cards.map((card) => card.interval))
+    ).sort((a, b) => a - b);
+    return uniqueIntervals.map((interval) => ({
       interval,
       count: cards.filter((card) => card.interval === interval).length,
     }));
-    return data;
   };
 
-  const spacedRepetitionData = getSpacedRepetitionData(cards);
+  const spacedRepetitionData = getSpacedRepetitionData(allCards);
 
   // Handle starting study session
-  const handleStartStudy = (deckId) => {
-    const cardsToStudy = cards.filter(
-      (card) =>
-        (card.status === "due" || card.status === "new") &&
-        (!deckId || card.deckId === deckId)
-    );
+  const handleStartStudy = async (deckId) => {
+    try {
+      setLoading(true);
+      let cardsToStudy;
 
-    if (cardsToStudy.length === 0) {
-      return;
+      if (deckId) {
+        // If studying a specific deck, get cards from that deck
+        const response = await flashcardAPI.getCardsInDeck(deckId);
+        cardsToStudy = response.data;
+      } else {
+        // If studying all due cards
+        const response = await flashcardAPI.getDueCards();
+        cardsToStudy = response.data;
+      }
+
+      if (!cardsToStudy || cardsToStudy.length === 0) {
+        toast.info("No cards available for study");
+        return;
+      }
+
+      const deckName = deckId
+        ? decks.find((d) => d.id === deckId)?.name
+        : "All Cards";
+
+      navigate("/student/flashcards/study", {
+        state: {
+          cards: cardsToStudy,
+          deckId,
+          deckName,
+        },
+      });
+    } catch (error) {
+      toast.error(error.message || "Failed to start study session");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const deckName = deckId ? decks.find((d) => d.id === deckId)?.name : null;
-
-    navigate("/student/flashcards/study", {
-      state: {
-        cards: cardsToStudy,
-        deckId,
-        deckName,
-      },
+  // Thêm hàm group cards theo cardSetTitle
+  const groupCardsBySetTitle = (cards) => {
+    const groups = {};
+    cards.forEach((card) => {
+      const title = card.cardSetTitle || "No Title";
+      if (!groups[title]) groups[title] = [];
+      groups[title].push(card);
     });
+    return groups;
+  };
+
+  // Add handleEditDeck function
+  const handleEditDeck = async (deckId, newName) => {
+    try {
+      await flashcardAPI.updateDeck(deckId, { name: newName });
+      setDecks(decks.map(deck => 
+        deck.id === deckId ? { ...deck, name: newName } : deck
+      ));
+      setEditingDeckId(null);
+      setEditingDeckName("");
+      toast.success("Deck name updated successfully");
+    } catch (error) {
+      toast.error(error.message || "Failed to update deck name");
+    }
+  };
+
+  const handleDeckUpdated = (deckId, newName) => {
+    setDecks(prevDecks =>
+      prevDecks.map(deck =>
+        deck.id === deckId ? { ...deck, name: newName } : deck
+      )
+    );
+  };
+
+  const handleEditCardSave = async () => {
+    try {
+      await flashcardAPI.updateCard(editingCardId, {
+        question: editingCardQuestion,
+        answer: editingCardAnswer,
+      });
+      setCards(prev => prev.map(card => card.id === editingCardId ? { ...card, question: editingCardQuestion, answer: editingCardAnswer } : card));
+      setEditingCardId(null);
+      toast.success("Card updated successfully");
+    } catch (error) {
+      toast.error(error.message || "Failed to update card");
+    }
+  };
+
+  const handleDeleteCardConfirm = async () => {
+    try {
+      await flashcardAPI.deleteCard(editingCardId);
+      setCards(prev => prev.filter(card => card.id !== editingCardId));
+      setEditingCardId(null);
+      setShowDeleteDialog(false);
+      toast.success("Card deleted successfully");
+    } catch (error) {
+      toast.error(error.message || "Failed to delete card");
+    }
+  };
+
+  const handleEditGroupTitle = async () => {
+    try {
+      await flashcardAPI.updateCardGroupTitle({ oldTitle: editingGroupTitle, newTitle: newGroupTitle });
+      toast.success("Group title updated");
+      setEditingGroupTitle(null);
+      setNewGroupTitle("");
+      fetchAllCards();
+    } catch (error) {
+      toast.error(error.message || "Failed to update group title");
+    }
+  };
+
+  const handleDeleteGroupTitle = async () => {
+    try {
+      await flashcardAPI.deleteCardGroupByTitle(deletingGroupTitle);
+      toast.success("Group deleted");
+      setDeletingGroupTitle(null);
+      fetchAllCards();
+    } catch (error) {
+      toast.error(error.message || "Failed to delete group");
+    }
   };
 
   return (
@@ -315,17 +549,11 @@ export default function FlashCards() {
                     {dueCards} cards due for review today
                   </p>
                 </div>
-                <Button
-                  className="bg-blue-500 hover:bg-blue-600"
-                  onClick={() => handleStartStudy(null)}
-                  disabled={dueCards === 0}
-                >
-                  Start Review
-                </Button>
+                
               </div>
 
               <ReviewCards
-                cards={cards.filter(
+                cards={allCards.filter(
                   (card) => card.status === "due" || card.status === "new"
                 )}
                 onStartReview={handleStartStudy}
@@ -373,30 +601,48 @@ export default function FlashCards() {
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-start">
                           <CardTitle className="text-xl">{deck.name}</CardTitle>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                          <div className="relative inline-block">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent 
+                                align="end" 
+                                className="fixed z-[9999] bg-white shadow-lg rounded-md border border-gray-200 min-w-[160px] p-1"
+                                sideOffset={5}
+                                alignOffset={0}
+                                style={{
+                                  position: 'fixed',
+                                  transform: 'translate3d(0, 0, 0)',
+                                  willChange: 'transform'
+                                }}
                               >
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteDeck(deck.id)}
-                                className="text-red-500"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                                <DropdownMenuItem
+                                  className="flex items-center gap-2 cursor-pointer"
+                                  onClick={() => {
+                                    setEditingDeckId(deck.id);
+                                    setEditingDeckName(deck.name);
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                  <span>Edit</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handleDeleteDeck(deck.id)} 
+                                  className="text-red-500 cursor-pointer hover:bg-gray-100 px-2 py-1.5 text-sm flex items-center"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </div>
                         <CardDescription>
                           <div className="flex items-center gap-1 text-sm">
@@ -451,7 +697,7 @@ export default function FlashCards() {
                     onChange={(e) => setSelectedDeckId(e.target.value || null)}
                   >
                     <option value="">All Decks</option>
-                    {decks.map((deck) => (
+                    {decks?.map((deck) => (
                       <option key={deck.id} value={deck.id}>
                         {deck.name}
                       </option>
@@ -463,150 +709,238 @@ export default function FlashCards() {
                       size="sm"
                       className="bg-blue-500 hover:bg-blue-600 ml-auto"
                       onClick={() => handleStartStudy(selectedDeckId)}
-                      disabled={
-                        decks.find((d) => d.id === selectedDeckId)
-                          ?.cardCount === 0
-                      }
+                      disabled={!cards?.length}
                     >
                       Study Selected Deck
                     </Button>
                   )}
                 </div>
 
-                <div className="space-y-3">
-                  {filteredCards.length === 0 ? (
+                {loading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : selectedTitle === null ? (
+                  Object.keys(groupCardsBySetTitle(filteredCards)).length ===
+                  0 ? (
                     <div className="text-center py-12">
                       <p className="text-gray-500">
-                        No cards found. Create a new card or adjust your
-                        filters.
+                        No card sets in this deck.
                       </p>
-                      <Button
-                        onClick={() =>
-                          navigate("/student/flashcards/create-card")
-                        }
-                        className="mt-4 bg-green-500 hover:bg-green-600"
-                      >
-                        <PlusCircle className="h-4 w-4 mr-2" />
-                        Create Cards
-                      </Button>
                     </div>
                   ) : (
-                    filteredCards.map((card) => (
-                      <Card key={card.id} className="overflow-hidden">
-                        <CardHeader className="pb-2">
-                          <div className="flex justify-between">
-                            <div>
-                              <Badge
-                                variant="outline"
-                                className={`mb-2 ${
-                                  card.status === "due"
-                                    ? "bg-amber-100 text-amber-800 border-amber-200"
-                                    : card.status === "learned"
-                                    ? "bg-green-100 text-green-800 border-green-200"
-                                    : "bg-blue-100 text-blue-800 border-blue-200"
-                                }`}
-                              >
-                                {card.status === "due"
-                                  ? "Due for review"
-                                  : card.status === "learned"
-                                  ? "Learned"
-                                  : "New"}
-                              </Badge>
-                              <Badge variant="outline" className="ml-2 mb-2">
-                                {card.type === "basic"
-                                  ? "Basic"
-                                  : card.type === "cloze"
-                                  ? "Cloze"
-                                  : "Image"}
-                              </Badge>
-                            </div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleDeleteCard(card.id)}
-                                  className="text-red-500"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                    Object.entries(groupCardsBySetTitle(filteredCards)).map(
+                      ([title, cardsInGroup]) => (
+                        <div
+                          key={title}
+                          className="mb-4 cursor-pointer hover:bg-blue-50 rounded p-4 border"
+                          onClick={() => setSelectedTitle(title)}
+                        >
+                          <div className="flex items-center gap-2">
+                            <h2 className="text-lg font-bold">{title}</h2>
+                            <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); setEditingGroupTitle(title); setNewGroupTitle(title); }}>
+                              <Edit className="h-4 w-4 text-gray-600" />
+                            </Button>
+                            <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); setDeletingGroupTitle(title); }}>
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
                           </div>
-                        </CardHeader>
-                        <CardContent>
-                          {card.type === "basic" ? (
-                            <div>
-                              <h3 className="font-medium mb-1">Question:</h3>
-                              <p className="mb-3">{card.question}</p>
-                              <h3 className="font-medium mb-1">Answer:</h3>
-                              <p>{card.answer}</p>
-                            </div>
-                          ) : card.type === "cloze" ? (
-                            <div>
-                              <h3 className="font-medium mb-1">Cloze:</h3>
-                              <p
-                                dangerouslySetInnerHTML={{
-                                  __html: card.clozeText.replace(
-                                    /\{\{([^}]+)\}\}/g,
-                                    '<span class="bg-blue-200 px-1 rounded">$1</span>'
-                                  ),
-                                }}
-                              ></p>
-                            </div>
-                          ) : (
-                            <div>
-                              <h3 className="font-medium mb-1">
-                                Image Question:
-                              </h3>
-                              <p>{card.question}</p>
-                              {card.imageUrl && (
-                                <img
-                                  src={card.imageUrl || "/placeholder.svg"}
-                                  alt="Card image"
-                                  className="my-2 max-h-[200px] object-contain rounded-md"
-                                />
+                          <span className="text-sm text-gray-500">
+                            {cardsInGroup.length} cards
+                          </span>
+                        </div>
+                      )
+                    )
+                  )
+                ) : (
+                  <div>
+                    <Button
+                      onClick={() => setSelectedTitle(null)}
+                      variant="outline"
+                      className="mb-4 flex items-center gap-2 border-gray-300 text-[#303345] hover:bg-gray-100"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Back to Card Sets
+                    </Button>
+                    <h2 className="text-xl font-bold mb-4">{selectedTitle}</h2>
+                    <div className="space-y-3">
+                      {groupCardsBySetTitle(filteredCards)[selectedTitle].map(
+                        (card) => (
+                          <Card key={card.id} className="overflow-hidden">
+                            <CardHeader className="pb-2">
+                              <div className="flex justify-between">
+                                <div>
+                                  <Badge
+                                    variant="outline"
+                                    className={`mb-2 ${
+                                      card.status === "due"
+                                        ? "bg-amber-100 text-amber-800 border-amber-200"
+                                        : card.status === "learned"
+                                        ? "bg-green-100 text-green-800 border-green-200"
+                                        : "bg-blue-100 text-blue-800 border-blue-200"
+                                    }`}
+                                  >
+                                    {card.status === "due"
+                                      ? "Due for review"
+                                      : card.status === "learned"
+                                      ? "Learned"
+                                      : "New"}
+                                  </Badge>
+                                  <Badge
+                                    variant="outline"
+                                    className="ml-2 mb-2"
+                                  >
+                                    {card.type === "basic"
+                                      ? "Basic"
+                                      : card.type === "cloze"
+                                      ? "Cloze"
+                                      : "Image"}
+                                  </Badge>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 hover:bg-gray-100"
+                                    onClick={() => {
+                                      setEditingCardId(card.id);
+                                      setEditingCardQuestion(card.question);
+                                      setEditingCardAnswer(card.answer);
+                                    }}
+                                  >
+                                    <Edit className="h-4 w-4 text-gray-600" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 hover:bg-gray-100"
+                                    onClick={() => { setEditingCardId(card.id); setShowDeleteDialog(true); }}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent>
+                              {card.type === "basic" ? (
+                                <div className="flex flex-col md:flex-row gap-4">
+                                  <div className="flex-1 bg-blue-50 rounded-md p-4">
+                                    <h3 className="font-medium mb-1 text-blue-700">Question</h3>
+                                    <p>{card.question}</p>
+                                  </div>
+                                  <div className="flex-1 bg-green-50 rounded-md p-4">
+                                    <h3 className="font-medium mb-1 text-green-700">Answer</h3>
+                                    <p>{card.answer}</p>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col md:flex-row gap-4">
+                                  <div className="flex-1 bg-blue-50 rounded-md p-4">
+                                    <h3 className="font-medium mb-1 text-blue-700">Question</h3>
+                                    <p>{card.question}</p>
+                                    {card.imageUrl && (
+                                      <img
+                                        src={card.imageUrl || "/placeholder.svg"}
+                                        alt="Card image"
+                                        className="my-2 max-h-[200px] object-contain rounded-md" 
+                                      />
+                                    )}
+                                  </div>
+                                  <div className="flex-1 bg-green-50 rounded-md p-4">
+                                    <h3 className="font-medium mb-1 text-green-700">Answer</h3>
+                                    <p>{card.answer}</p>
+                                  </div>
+                                </div>
                               )}
-                              <h3 className="font-medium mb-1 mt-3">Answer:</h3>
-                              <p>{card.answer}</p>
-                            </div>
-                          )}
-                        </CardContent>
-                        <CardFooter className="flex flex-wrap gap-1 pt-0">
-                          <div className="flex items-center text-xs text-gray-500 mr-3">
-                            <Tag className="h-3 w-3 mr-1" />
-                            {card.tags.map((tag, index) => (
-                              <span key={index} className="mr-1">
-                                {tag}
-                                {index < card.tags.length - 1 ? "," : ""}
-                              </span>
-                            ))}
-                          </div>
-                          <div className="flex items-center text-xs text-gray-500">
-                            <span className="mr-2">
-                              Interval: {card.interval} days
-                            </span>
-                            <span>Ease: {card.easeFactor.toFixed(1)}</span>
-                          </div>
-                        </CardFooter>
-                      </Card>
-                    ))
-                  )}
-                </div>
+                            </CardContent>
+                            <CardFooter className="flex flex-wrap gap-1 pt-0">
+                              <div className="flex items-center text-xs text-gray-500 mr-3">
+                                <Tag className="h-3 w-3 mr-1" />
+                                {card.tags?.map((tag, index) => (
+                                  <span key={index} className="mr-1">
+                                    {tag}
+                                    {index < card.tags.length - 1 ? "," : ""}
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="flex items-center text-xs text-gray-500">
+                                <span className="mr-2">
+                                  Interval: {card.interval || 0} days
+                                </span>
+                                <span>
+                                  Ease: {(card.easeFactor || 2.5).toFixed(1)}
+                                </span>
+                              </div>
+                            </CardFooter>
+                          </Card>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
+
+            {/* Edit Deck Modal */}
+            <EditDeck
+              isOpen={!!editingDeckId}
+              onClose={() => {
+                setEditingDeckId(null);
+                setEditingDeckName("");
+              }}
+              deckId={editingDeckId}
+              currentName={editingDeckName}
+              onDeckUpdated={handleDeckUpdated}
+            />
+
+            {/* Edit Card */}
+            <EditCard
+              open={!!editingCardId && !showDeleteDialog}
+              onClose={() => setEditingCardId(null)}
+              question={editingCardQuestion}
+              answer={editingCardAnswer}
+              onChangeQuestion={setEditingCardQuestion}
+              onChangeAnswer={setEditingCardAnswer}
+              onSave={handleEditCardSave}
+            />
+
+            {/* Delete Card Confirm */}
+            <DeleteCardConfirm
+              open={showDeleteDialog}
+              onClose={() => {
+                setShowDeleteDialog(false);
+                setEditingCardId(null);
+              }}
+              onConfirm={handleDeleteCardConfirm}
+            />
+
+            {/* Edit Group Title */}
+            <Dialog open={!!editingGroupTitle} onOpenChange={open => { if (!open) setEditingGroupTitle(null); }}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Group Title</DialogTitle>
+                </DialogHeader>
+                <Input value={newGroupTitle} onChange={e => setNewGroupTitle(e.target.value)} />
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button variant="outline" onClick={() => setEditingGroupTitle(null)}>Cancel</Button>
+                  <Button className="bg-[#1f53f3] text-white" onClick={handleEditGroupTitle}>Save</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Delete Group Title */}
+            <Dialog open={!!deletingGroupTitle} onOpenChange={open => { if (!open) setDeletingGroupTitle(null); }}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Group</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">Are you sure you want to delete all cards in group "{deletingGroupTitle}"?</div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setDeletingGroupTitle(null)}>Cancel</Button>
+                  <Button className="bg-red-500 text-white" onClick={handleDeleteGroupTitle}>Delete</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>

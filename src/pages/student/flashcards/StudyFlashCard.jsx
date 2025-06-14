@@ -17,6 +17,8 @@ import {
 import SideBarStudent from "@/components/layout/SideBarStudent";
 import NavBar from "@/components/layout/NavBar";
 import CircularProgress from "@/components/common/CircularProgress";
+import { flashcardAPI } from "@/api";
+import { toast } from "sonner";
 
 const Study = () => {
   const navigate = useNavigate();
@@ -33,6 +35,7 @@ const Study = () => {
   const [timeSpent, setTimeSpent] = useState(0);
   const [studyHistory, setStudyHistory] = useState([]);
   const [showSummary, setShowSummary] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Timer effect
   useEffect(() => {
@@ -44,24 +47,46 @@ const Study = () => {
     }
   }, [showSummary]);
 
-  const handleRating = (rating) => {
-    const currentCard = cards[currentCardIndex];
-    const studyRecord = { 
-      cardId: currentCard.id,
-      performance: rating,
-      timeSpent,
-      date: new Date().toISOString(),
-    };
+  const handleRating = async (rating) => {
+    try {
+      setLoading(true);
+      const currentCard = cards[currentCardIndex];
+      
+      // Map UI ratings to API status
+      const statusMap = {
+        'excellent': 'perfect',
+        'good': 'good',
+        'medium': 'hard',
+        'poor': 'failed'
+      };
 
-    setStudyHistory([...studyHistory, studyRecord]);
+      // Call API to update card progress
+      await flashcardAPI.studyCard(currentCard.id, {
+        status: statusMap[rating],
+        timeSpent
+      });
 
-    // Move to next card or show summary
-    if (currentCardIndex < cards.length - 1) {
-      setIsFlipped(false);
-      setTimeSpent(0);
-      setCurrentCardIndex((prev) => prev + 1);
-    } else {
-      setShowSummary(true);
+      const studyRecord = { 
+        cardId: currentCard.id,
+        performance: rating,
+        timeSpent,
+        date: new Date().toISOString(),
+      };
+
+      setStudyHistory([...studyHistory, studyRecord]);
+
+      // Move to next card or show summary
+      if (currentCardIndex < cards.length - 1) {
+        setIsFlipped(false);
+        setTimeSpent(0);
+        setCurrentCardIndex((prev) => prev + 1);
+      } else {
+        setShowSummary(true);
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to update card progress");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -71,7 +96,6 @@ const Study = () => {
       setTimeSpent(0);
       setCurrentCardIndex((prev) => prev + 1);
     } else {
-      // Kiểm tra xem có học card nào không
       const hasStudiedAnyCard = studyHistory.length > 0 || currentCardIndex > 0;
       
       if (hasStudiedAnyCard) {
@@ -83,7 +107,6 @@ const Study = () => {
   };
 
   const handleEndSession = () => {
-    // Kiểm tra xem có học card nào không
     const hasStudiedAnyCard = studyHistory.length > 0 || currentCardIndex > 0;
     
     if (hasStudiedAnyCard) {
@@ -94,16 +117,13 @@ const Study = () => {
   };
 
   const handleBackToFlashcards = () => {
-    // Kiểm tra xem có học card nào không
     const hasStudiedAnyCard = studyHistory.length > 0 || currentCardIndex > 0;
     
-    // Nếu chưa học card nào, quay về trang flashcards chính
     if (!hasStudiedAnyCard) {
       navigate("/student/flashcards");
       return;
     }
 
-    // Nếu đã học ít nhất 1 card, quay về với summary
     navigate("/student/flashcards", {
       state: {
         studyHistory,
@@ -112,12 +132,22 @@ const Study = () => {
     });
   };
 
-  const handleStudyAgain = () => {
-    setShowSummary(false);
-    setCurrentCardIndex(0);
-    setIsFlipped(false);
-    setTimeSpent(0);
-    setStudyHistory([]);
+  const handleStudyAgain = async () => {
+    try {
+      setLoading(true);
+      // Fetch due cards again
+      const response = await flashcardAPI.getDueCards();
+      setCards(response.data);
+      setShowSummary(false);
+      setCurrentCardIndex(0);
+      setIsFlipped(false);
+      setTimeSpent(0);
+      setStudyHistory([]);
+    } catch (error) {
+      toast.error(error.message || "Failed to fetch cards for study");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const currentCard = cards[currentCardIndex];
@@ -344,6 +374,7 @@ const Study = () => {
                             setIsFlipped(false);
                             setTimeout(() => handleRating("poor"), 100);
                           }}
+                          disabled={loading}
                         >
                           <XCircle className="h-5 w-5 text-red-500" />
                           Failed
@@ -356,6 +387,7 @@ const Study = () => {
                             setIsFlipped(false);
                             setTimeout(() => handleRating("medium"), 100);
                           }}
+                          disabled={loading}
                         >
                           <HelpCircle className="h-5 w-5 text-yellow-500" />
                           Hard
@@ -368,6 +400,7 @@ const Study = () => {
                             setIsFlipped(false);
                             setTimeout(() => handleRating("good"), 100);
                           }}
+                          disabled={loading}
                         >
                           <ThumbsUp className="h-5 w-5 text-blue-500" />
                           Good
@@ -380,6 +413,7 @@ const Study = () => {
                             setIsFlipped(false);
                             setTimeout(() => handleRating("excellent"), 100);
                           }}
+                          disabled={loading}
                         >
                           <CheckCircle2 className="h-5 w-5 text-green-500" />
                           Perfect
