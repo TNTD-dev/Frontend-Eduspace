@@ -21,13 +21,21 @@ import { currentCourses} from "@/data/mock/courseData";
 import { userData } from "@/data/mock/userData";
 import { userAPI } from "@/api";
 import { courseEnrollmentAPI } from "@/api";
+import { flashcardAPI } from "@/api";
 
 export default function StudentDashboard() {
   const [date, setDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [user,setUser] = useState(null);
+  const [user, setUser] = useState(null);
   const [courses, setCourses] = useState([]);
+  const [flashcardStats, setFlashcardStats] = useState({
+    totalCards: 0,
+    dueCards: 0,
+    learnedCards: 0,
+    retentionScore: 0,
+  });
+
   useEffect(() => {
     userAPI.getUser()
       .then(res => {
@@ -41,22 +49,66 @@ export default function StudentDashboard() {
 
     courseEnrollmentAPI.getMyCourses()
       .then(res => {
-        console.log('Courses API Response:', res); // Debug log
-        // Check if response is an array
         if (Array.isArray(res)) {
           setCourses(res);
         } else if (res.data && Array.isArray(res.data)) {
           setCourses(res.data);
         } else {
-          console.error('Invalid courses data format:', res);
           setCourses([]);
         }
       })
       .catch(err => {
-        console.error('Courses API Error:', err);
         setError(err.response?.data?.error || "Error fetching courses");
         setCourses([]);
       });
+
+    // Fetch all flashcards and calculate stats
+    const fetchAllCards = async () => {
+      try {
+        const decksResponse = await flashcardAPI.getDecks();
+        const decks = decksResponse.data;
+        const allCardsPromises = decks.map((deck) =>
+          flashcardAPI.getCardsInDeck(deck.id)
+        );
+        const cardsResponses = await Promise.all(allCardsPromises);
+        const allCards = cardsResponses.flatMap(
+          (response) => response.data || []
+        );
+
+        const totalCards = allCards.length;
+        const dueCards = allCards.filter(
+          (card) => card.status === "due" || card.status === "new"
+        ).length;
+        const learnedCards = allCards.filter(
+          (card) => card.status === "learned"
+        ).length;
+        const calculateRetentionScore = (cards) => {
+          if (!cards || cards.length === 0) return 0;
+          const weights = { learned: 1.0, due: 0.5, new: 0.2 };
+          const totalWeight = cards.reduce(
+            (sum, card) => sum + (weights[card.status] || 0),
+            0
+          );
+          const maxPossibleWeight = cards.length * weights.learned;
+          return Math.round((totalWeight / maxPossibleWeight) * 100) || 0;
+        };
+        const retentionScore = calculateRetentionScore(allCards);
+        setFlashcardStats({
+          totalCards,
+          dueCards,
+          learnedCards,
+          retentionScore,
+        });
+      } catch (error) {
+        setFlashcardStats({
+          totalCards: 0,
+          dueCards: 0,
+          learnedCards: 0,
+          retentionScore: 0,
+        });
+      }
+    };
+    fetchAllCards();
   }, []);
 
   return (
@@ -118,7 +170,7 @@ export default function StudentDashboard() {
                     <h2 className="text-lg font-bold text-[#303345] mb-4">
                       Flashcards
                     </h2>
-                    <div className="rounded-xl bg-white p-4 shadow flex flex-col items-center min-h-[300px] w-full  ">
+                    <div className="rounded-xl bg-white p-4 shadow flex flex-col items-center min-h-[300px] w-full">
                       <div className="mb-4 flex items-center justify-between">
                         <div className="text-semibold text-[#303345] pr-4">
                           Total flashcards
@@ -126,29 +178,22 @@ export default function StudentDashboard() {
                         <div className="flex items-center gap-1">
                           <SwatchBook className="h-4 w-4 text-[#303345]" />
                           <span className="font-medium text-[#303345]">
-                            {userData.flashcards.remembered +
-                              userData.flashcards.toReview}
+                            {flashcardStats.totalCards}
                           </span>
                         </div>
                       </div>
                       <div className="space-y-6">
                         <CircularProgress
-                          value={userData.flashcards.toReview}
-                          maxValue={
-                            userData.flashcards.remembered +
-                            userData.flashcards.toReview
-                          }
-                          color="#9337fc"
-                          label="To Review"
+                          value={flashcardStats.dueCards}
+                          maxValue={flashcardStats.totalCards}
+                          color="#F59E0B"
+                          label="Due Cards"
                         />
                         <CircularProgress
-                          value={userData.flashcards.reviewStats.correct}
-                          maxValue={
-                            userData.flashcards.reviewStats.correct +
-                            userData.flashcards.reviewStats.wrong
-                          }
-                          color="#1cd767"
-                          label="Retention Rate"
+                          value={flashcardStats.retentionScore}
+                          maxValue={100}
+                          color="#3B82F6"
+                          label="Retention Score"
                         />
                       </div>
                     </div>

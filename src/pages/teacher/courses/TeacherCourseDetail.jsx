@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import SideBarTeacher from "@/components/layout/SideBarTeacher";
 import EditableCourseHeader from "@/components/features/course/teacher/EditableCourseHeader";
+import LessonModal from "@/components/features/course/teacher/LessonModal";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   ArrowLeft,
@@ -26,9 +27,9 @@ import {
   Users,
   Star,
   TrendingUp,
-  MapPin,
+  MapPin
 } from "lucide-react";
-import { currentCourses, completedCourses } from "@/data/mock/teacherCourseData";
+import { currentCourses, completedCourses } from "@/data/mock/courseData";
 import NavBar from "@/components/layout/NavBar";
 import NewDiscussion from "@/components/features/course/NewDiscussion";
 import { studentData } from "@/data/mock/mockStudentData";
@@ -56,6 +57,10 @@ export default function TeacherCourseDetail() {
 
   const [isNewDiscussionOpen, setIsNewDiscussionOpen] = useState(false);
 
+  const [lessonModalOpen, setLessonModalOpen] = useState(false);
+  const [editingLesson, setEditingLesson] = useState(null);
+
+
   const [modulesState, setModulesState] = useState([]);
   const [expandedModules, setExpandedModules] = useState({});
 
@@ -65,7 +70,7 @@ export default function TeacherCourseDetail() {
   const isPublished = course?.status === "published";
   const isArchived = course?.status === "archived";
 
-  // ─── Load course, modules, and students ────────────────────────────────────
+  //load details
   useEffect(() => {
     setLoading(true);
     setTimeout(() => {
@@ -73,12 +78,12 @@ export default function TeacherCourseDetail() {
       setCourse(found || null);
 
       if (found) {
-        // Modules
+        //modules
         if (found.modules) {
           setModulesState(
             found.modules.map((m) => ({
               ...m,
-              lessons: m.lessons ? [...m.lessons] : [],
+              lessons: m.lessons ? [...m.lessons] : []
             }))
           );
           const initialExpanded = {};
@@ -91,14 +96,14 @@ export default function TeacherCourseDetail() {
           setExpandedModules({});
         }
 
-        // Draft fields
+        //draft fields
         setDraftDescription(found.description || "");
         setDraftStartDate(found.startDate || "");
         setDraftEndDate(found.endDate || "");
         setDraftSchedule(found.schedule || "");
         setDraftLocation(found.location || "");
 
-        // Students (mock data)
+        //students (mock)
         setStudents(studentData[found.id] || []);
       } else {
         setModulesState([]);
@@ -108,80 +113,78 @@ export default function TeacherCourseDetail() {
       setLoading(false);
     }, 500);
   }, [courseId]);
-  // ─────────────────────────────────────────────────────────────────────────────
 
-  // ─── Handle return from “Add/Edit Assignment” ───────────────────────────────
+  //handle add assignment
   useEffect(() => {
     if (course && location.state?.fromAssignment) {
       const { action, assignment } = location.state.fromAssignment;
       if (action === "add") {
         setCourse((prev) => ({
           ...prev,
-          assignments: [assignment, ...(prev.assignments || [])],
+          assignments: [assignment, ...(prev.assignments || [])]
         }));
       } else if (action === "edit") {
         setCourse((prev) => ({
           ...prev,
           assignments: prev.assignments.map((a) =>
             a.id === assignment.id ? assignment : a
-          ),
+          )
         }));
       } else if (action === "delete") {
         setCourse((prev) => ({
           ...prev,
-          assignments: prev.assignments.filter((a) => a.id !== assignment.id),
+          assignments: prev.assignments.filter((a) => a.id !== assignment.id)
         }));
       }
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, course, navigate]);
-  // ─────────────────────────────────────────────────────────────────────────────
 
-  // ─── Handle return from “Add/Edit Resource” ────────────────────────────────
+  //handle add resources
   useEffect(() => {
     if (course && location.state?.fromResource) {
       const { action, resource } = location.state.fromResource;
       if (action === "add") {
         setCourse((prev) => ({
           ...prev,
-          resources: [resource, ...(prev.resources || [])],
+          resources: [resource, ...(prev.resources || [])]
         }));
       } else if (action === "edit") {
         setCourse((prev) => ({
           ...prev,
           resources: prev.resources.map((r) =>
             r.id === resource.id ? resource : r
-          ),
+          )
         }));
       } else if (action === "delete") {
         setCourse((prev) => ({
           ...prev,
-          resources: prev.resources.filter((r) => r.id !== resource.id),
+          resources: prev.resources.filter((r) => r.id !== resource.id)
         }));
       }
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, course, navigate]);
-  // ─────────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (course && location.state?.fromModule) {
       const newModule = location.state.fromModule;
-      setModulesState((prev) => [...prev, newModule]);
-      setExpandedModules((prev) => ({ ...prev, [newModule.id]: true }));
+      setModulesState(prev => [...prev, newModule]);
+      setExpandedModules(prev => ({ ...prev, [newModule.id]: true }));
       // clear state so it doesn’t re-fire
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, course, navigate, location.pathname]);
 
-  // ─── Module & Lesson Helpers ───────────────────────────────────────────────
+  //module and lessons
   const toggleModule = (mid) => {
     setExpandedModules((prev) => ({ ...prev, [mid]: !prev[mid] }));
   };
 
   const handleAddModule = () => {
-    navigate(`/teacher/courses/${courseId}/modules/new`);
+  navigate(`/teacher/courses/${courseId}/modules/new`);
   };
+
 
   const handleAddLesson = (moduleId) => {
     const lessonTitle = prompt("Enter new lesson title:");
@@ -192,7 +195,7 @@ export default function TeacherCourseDetail() {
       id: Date.now(),
       title: lessonTitle.trim(),
       duration: lessonDuration.trim(),
-      completed: false,
+      completed: false
     };
     setModulesState((prev) =>
       prev.map((m) =>
@@ -204,14 +207,12 @@ export default function TeacherCourseDetail() {
   const handleEditModule = (moduleId) => {
     const mod = modulesState.find((m) => m.id === moduleId);
     if (!mod) return;
-    const newTitle = prompt("Edit module title:", mod.title);
-    if (!newTitle?.trim()) return;
-    setModulesState((prev) =>
-      prev.map((m) =>
-        m.id === moduleId ? { ...m, title: newTitle.trim() } : m
-      )
+    navigate(
+      `/teacher/courses/${courseId}/modules/${moduleId}/edit`,
+      { state: { fromModule: mod } }
     );
   };
+
 
   const handleDeleteModule = (moduleId) => {
     if (
@@ -240,40 +241,40 @@ export default function TeacherCourseDetail() {
     });
   };
 
-  const handleEditLesson = (moduleId, lessonId) => {
-    const mod = modulesState.find((m) => m.id === moduleId);
-    if (!mod) return;
-    const lesson = mod.lessons.find((l) => l.id === lessonId);
-    if (!lesson) return;
-    const newTitle = prompt("Edit lesson title:", lesson.title);
-    if (!newTitle?.trim()) return;
-    const newDuration = prompt("Edit lesson duration:", lesson.duration);
-    if (!newDuration?.trim()) return;
-    setModulesState((prev) =>
-      prev.map((m) => {
-        if (m.id !== moduleId) return m;
-        return {
-          ...m,
-          lessons: m.lessons.map((l) =>
-            l.id === lessonId
-              ? { ...l, title: newTitle.trim(), duration: newDuration.trim() }
-              : l
-          ),
-        };
-      })
-    );
-  };
+ const handleEditLesson = (moduleId, lessonId) => {
+   const mod = modulesState.find(m => m.id === moduleId);
+   const lesson = mod?.lessons.find(l => l.id === lessonId);
+   if (!lesson) return;
+   setEditingLesson({ moduleId, ...lesson });
+   setLessonModalOpen(true);
+ };
 
-  const handleDeleteLesson = (moduleId, lessonId) => {
-    if (!window.confirm("Delete this lesson?")) return;
-    setModulesState((prev) =>
-      prev.map((m) =>
-        m.id === moduleId
-          ? { ...m, lessons: m.lessons.filter((l) => l.id !== lessonId) }
-          : m
-      )
-    );
-  };
+ // Delete inline
+ const handleDeleteLesson = (moduleId, lessonId) => {
+   if (!confirm("Delete this lesson?")) return;
+   setModulesState(prev =>
+     prev.map(m =>
+       m.id === moduleId
+         ? { ...m, lessons: m.lessons.filter(l => l.id !== lessonId) }
+         : m
+     )
+   );
+ };
+
+ // Called when the modal’s Save button is clicked
+ const handleSaveLesson = updated => {
+   setModulesState(prev =>
+     prev.map(m =>
+       m.id !== updated.moduleId
+         ? m
+         : {
+             ...m,
+             lessons: m.lessons.map(l => (l.id === updated.id ? updated : l))
+           }
+     )
+   );
+ };
+
 
   const moveLesson = (moduleId, lessonId, direction) => {
     setModulesState((prev) =>
@@ -286,15 +287,15 @@ export default function TeacherCourseDetail() {
         const newLessons = [...m.lessons];
         [newLessons[idx], newLessons[swapIdx]] = [
           newLessons[swapIdx],
-          newLessons[idx],
+          newLessons[idx]
         ];
         return { ...m, lessons: newLessons };
       })
     );
   };
-  // ─────────────────────────────────────────────────────────────────────────────
 
-  // ─── Save “About” & “Details” edits ─────────────────────────────────────────
+
+  //save about and details
   const saveAbout = () => {
     setCourse((prev) => ({ ...prev, description: draftDescription }));
     setIsEditingAbout(false);
@@ -306,20 +307,19 @@ export default function TeacherCourseDetail() {
       startDate: draftStartDate,
       endDate: draftEndDate,
       schedule: draftSchedule,
-      location: draftLocation,
+      location: draftLocation
     }));
     setIsEditingDetails(false);
   };
-  // ─────────────────────────────────────────────────────────────────────────────
 
-  // ─── Navigation handlers ────────────────────────────────────────────────────
+  //navigation
   const handleLessonClick = (lid) =>
     navigate(`/teacher/courses/${courseId}/lessons/${lid}`);
 
   const handleAssignmentClick = (aid, mode = "view") => {
     if (mode === "edit") {
       navigate(`/teacher/courses/${courseId}/assignments/${aid}/edit`, {
-        state: { assignment: course.assignments.find((a) => a.id === aid) },
+        state: { assignment: course.assignments.find((a) => a.id === aid) }
       });
     } else {
       navigate(`/teacher/courses/${courseId}/assignments/${aid}`);
@@ -333,7 +333,7 @@ export default function TeacherCourseDetail() {
     const newD = { id: `d${Date.now()}`, ...discussionData };
     setCourse((prev) => ({
       ...prev,
-      discussions: [newD, ...(prev.discussions || [])],
+      discussions: [newD, ...(prev.discussions || [])]
     }));
     handleDiscussionClick(newD.id);
   };
@@ -342,11 +342,13 @@ export default function TeacherCourseDetail() {
     navigate(`/teacher/courses/${courseId}/assignments/new`);
 
   const handleDeleteAssignment = (assignId) => {
-    if (!window.confirm("Are you sure you want to delete this assignment?"))
+    if (
+      !window.confirm("Are you sure you want to delete this assignment?")
+    )
       return;
     setCourse((prev) => ({
       ...prev,
-      assignments: prev.assignments.filter((a) => a.id !== assignId),
+      assignments: prev.assignments.filter((a) => a.id !== assignId)
     }));
   };
 
@@ -357,17 +359,16 @@ export default function TeacherCourseDetail() {
     const res = course.resources.find((r) => r.id === resId);
     if (!res) return;
     navigate(`/teacher/courses/${courseId}/resources/${resId}`, {
-      state: { fromResource: { resource: res } },
+      state: { fromResource: { resource: res } }
     });
   };
 
   const handleDeleteResource = (resId) => {
     if (!window.confirm("Delete this resource?")) return;
     navigate(`/teacher/courses/${courseId}`, {
-      state: { fromResource: { action: "delete", resource: { id: resId } } },
+      state: { fromResource: { action: "delete", resource: { id: resId } } }
     });
   };
-  // ─────────────────────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -418,8 +419,10 @@ export default function TeacherCourseDetail() {
     );
   }
 
-  // Top 10 students sorted by descending score
-  const topTen = [...students].sort((a, b) => b.score - a.score).slice(0, 10);
+  //top 10 stu stu
+  const topTen = [...students]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10);
 
   return (
     <div className="flex min-h-screen bg-[#f4f9fc]">
@@ -429,7 +432,7 @@ export default function TeacherCourseDetail() {
           <div className="mx-auto max-w-7xl px-4 py-6">
             <NavBar />
 
-            {/* ─── HEADER ────────────────────────────────────────────────────────────── */}
+            {/*header*/}
             <div
               className="relative rounded-t-lg overflow-hidden h-64 bg-cover bg-center mb-6"
               style={{ backgroundImage: `url(${course.image})` }}
@@ -499,9 +502,8 @@ export default function TeacherCourseDetail() {
                 </div>
               )}
             </div>
-            {/* ──────────────────────────────────────────────────────────────────────── */}
 
-            {/* ─── TAB NAVIGATOR ───────────────────────────────────────────────────────── */}
+            {/*tabs*/}
             <div className="border-b bg-white mb-6">
               <div className="flex space-x-1 px-6">
                 {[
@@ -509,7 +511,7 @@ export default function TeacherCourseDetail() {
                   "assignments",
                   "resources",
                   "discussions",
-                  "students",
+                  "students"
                 ].map((tab) => (
                   <button
                     key={tab}
@@ -525,12 +527,11 @@ export default function TeacherCourseDetail() {
                 ))}
               </div>
             </div>
-            {/* ──────────────────────────────────────────────────────────────────────── */}
 
-            {/* ─── “About This Course” + “Course Details” ─────────────────────────────── */}
+            {/*about this course + course details*/}
             <div className="p-6 mb-6">
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                {/* About This Course */}
+                {/*about*/}
                 <div className="lg:col-span-2">
                   <div className="relative rounded-lg border bg-white p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
@@ -579,7 +580,7 @@ export default function TeacherCourseDetail() {
                   </div>
                 </div>
 
-                {/* Course Details */}
+                {/*details*/}
                 <div className="lg:col-span-1">
                   <div className="relative rounded-lg border bg-white p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
@@ -683,7 +684,9 @@ export default function TeacherCourseDetail() {
                             type="date"
                             className="mt-1 w-full rounded-md border border-gray-300 p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             value={draftStartDate}
-                            onChange={(e) => setDraftStartDate(e.target.value)}
+                            onChange={(e) =>
+                              setDraftStartDate(e.target.value)
+                            }
                           />
                         </div>
                         <div>
@@ -694,7 +697,9 @@ export default function TeacherCourseDetail() {
                             type="date"
                             className="mt-1 w-full rounded-md border border-gray-300 p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             value={draftEndDate}
-                            onChange={(e) => setDraftEndDate(e.target.value)}
+                            onChange={(e) =>
+                              setDraftEndDate(e.target.value)
+                            }
                           />
                         </div>
                         <div>
@@ -706,7 +711,9 @@ export default function TeacherCourseDetail() {
                             placeholder="e.g. Monday, Wednesday 10:00 AM"
                             className="mt-1 w-full rounded-md border border-gray-300 p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             value={draftSchedule}
-                            onChange={(e) => setDraftSchedule(e.target.value)}
+                            onChange={(e) =>
+                              setDraftSchedule(e.target.value)
+                            }
                           />
                         </div>
                         <div>
@@ -718,7 +725,9 @@ export default function TeacherCourseDetail() {
                             placeholder="e.g. Online"
                             className="mt-1 w-full rounded-md border border-gray-300 p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             value={draftLocation}
-                            onChange={(e) => setDraftLocation(e.target.value)}
+                            onChange={(e) =>
+                              setDraftLocation(e.target.value)
+                            }
                           />
                         </div>
                         <div className="flex gap-2">
@@ -747,9 +756,8 @@ export default function TeacherCourseDetail() {
                 </div>
               </div>
             </div>
-            {/* ──────────────────────────────────────────────────────────────────────── */}
 
-            {/* ─── TAB CONTENT ─────────────────────────────────────────────────────────── */}
+            {/*tab content*/}
             {activeTab === "content" && (
               <div className="rounded-lg border bg-white p-6 shadow-sm mb-6">
                 <div className="flex items-center justify-between mb-4">
@@ -835,12 +843,13 @@ export default function TeacherCourseDetail() {
                           >
                             <Edit2 className="h-5 w-5 text-gray-500" />
                           </button>
+
                           <button
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation();
                               handleDeleteModule(mod.id);
                             }}
-                            className="rounded-full p-1 hover:bg-gray-200 transition-colors"
+                            className="p-1 hover:bg-gray-200 rounded-full"
                           >
                             <Trash2 className="h-5 w-5 text-red-500" />
                           </button>
@@ -862,19 +871,18 @@ export default function TeacherCourseDetail() {
                               className="flex items-center justify-between p-4 hover:bg-gray-50"
                             >
                               <div className="flex items-center gap-3">
-                                <div className="rounded-full bg-gray-100 p-2 text-gray-500">
-                                  {lesson.completed ? (
-                                    <CheckCircle className="h-4 w-4 text-green-500" />
-                                  ) : (
-                                    <Play className="h-4 w-4" />
-                                  )}
-                                </div>
+                              {lesson.fileObject?.type.startsWith("video/") ? (
+                                  <Play className="h-5 w-5 text-blue-500" />
+                                ) : (
+                                  <FileText className="h-5 w-5 text-gray-500" />
+                                )}
                                 <div>
-                                  <h4 className="font-medium text-gray-800">
-                                    {lesson.title}
-                                  </h4>
+                                  <h4 className="font-medium">{lesson.title}</h4>
+                                  {/* description: time for video, description text otherwise */}
                                   <p className="text-sm text-gray-500">
-                                    {lesson.duration}
+                                    {lesson.fileObject?.type.startsWith("video/")
+                                      ? lesson.duration
+                                      : lesson.description || "No description"}
                                   </p>
                                 </div>
                               </div>
@@ -991,12 +999,6 @@ export default function TeacherCourseDetail() {
                         >
                           Status
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500"
-                        >
-                          Grade
-                        </th>
                         <th scope="col" className="relative px-6 py-3">
                           <span className="sr-only">Actions</span>
                         </th>
@@ -1037,15 +1039,6 @@ export default function TeacherCourseDetail() {
                                 ? "In Progress"
                                 : "To Do"}
                             </span>
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4">
-                            {assign.grade ? (
-                              <div className="text-sm font-medium text-gray-900">
-                                {assign.grade}
-                              </div>
-                            ) : (
-                              <div className="text-sm text-gray-500">-</div>
-                            )}
                           </td>
                           <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                             <div className="flex items-center justify-end gap-2">
@@ -1234,9 +1227,7 @@ export default function TeacherCourseDetail() {
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-2 text-sm text-gray-500">
                             <MessageSquare className="h-4 w-4" />
-                            <span>
-                              {discussion.replies?.length || 0} replies
-                            </span>
+                            <span>{discussion.replies?.length || 0} replies</span>
                           </div>
                         </div>
                         <span className="text-xs text-gray-500">
@@ -1263,12 +1254,12 @@ export default function TeacherCourseDetail() {
               </div>
             )}
 
-            {/* ─── STUDENTS TAB ─────────────────────────────────────────────────────── */}
+            {/*student tab*/}
             {activeTab === "students" && (
               <div className="grid gap-6 lg:grid-cols-3 h-full">
                 {/* Left column (one-third width): Top 10 + Class Overview */}
                 <div className="col-span-1 flex flex-col space-y-6 h-full">
-                  {/* ─── Top 10 Students Box ─────────────────────────────────────────── */}
+                  {/*top 10*/}
                   <div className="rounded-lg border bg-white p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="text-xl font-bold text-gray-800">
@@ -1319,7 +1310,7 @@ export default function TeacherCourseDetail() {
                     </div>
                   </div>
 
-                  {/* ─── Class Overview Box ──────────────────────────────────────────── */}
+                  {/*class overview*/}
                   <div className="rounded-lg border bg-white p-6 shadow-sm flex-1 flex flex-col">
                     <div className="flex items-center gap-4 mb-6">
                       <div className="rounded-full bg-blue-100 p-3">
@@ -1379,179 +1370,186 @@ export default function TeacherCourseDetail() {
                     </div>
                   </div>
                 </div>
-                {/* ─── Enrolled Students Box (two-thirds width) ──────────── */}
-                <div className="col-span-2 flex flex-col h-205">
-                  <div className="rounded-lg border bg-white p-6 shadow-sm flex flex-col h-full">
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-xl font-bold text-gray-800">
-                        Enrolled Students
-                      </h2>
-                      <button
-                        onClick={() => setShowInviteModal(true)}
-                        className="flex items-center gap-1 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 transition-colors"
-                      >
-                        Invite Student
-                      </button>
-                    </div>
-
-                    <div className="flex-1 overflow-auto rounded-lg border border-gray-200">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-[#f4f9fc]">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                              Name
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                              Email
-                            </th>
-                            <th className="relative px-6 py-3">
-                              <span className="sr-only">Actions</span>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 bg-white">
-                          {students.map((s) => (
-                            <tr key={s.id} className="hover:bg-gray-50">
-                              <td className="whitespace-nowrap px-6 py-4">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {s.name}
-                                </div>
-                              </td>
-                              <td className="whitespace-nowrap px-6 py-4">
-                                <div className="text-sm text-gray-500">
-                                  {s.email}
-                                </div>
-                              </td>
-                              <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                <button
-                                  onClick={() => {
-                                    if (
-                                      window.confirm(
-                                        "Are you sure you want to remove this student?"
-                                      )
-                                    ) {
-                                      setStudents((prev) =>
-                                        prev.filter((st) => st.id !== s.id)
-                                      );
-                                    }
-                                  }}
-                                  className="rounded-full p-1 hover:bg-gray-200 transition-colors"
-                                >
-                                  <Trash2 className="h-5 w-5 text-red-500" />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                          {students.length === 0 && (
-                            <tr>
-                              <td
-                                colSpan={3}
-                                className="px-6 py-4 text-center text-sm text-gray-500"
-                              >
-                                No students enrolled yet.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+            {/*enrolled students*/}
+            <div className="col-span-2 flex flex-col h-205">
+              <div className="rounded-lg border bg-white p-6 shadow-sm flex flex-col h-full">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-800">
+                    Enrolled Students
+                  </h2>
+                  <button
+                    onClick={() => setShowInviteModal(true)}
+                    className="flex items-center gap-1 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 transition-colors"
+                  >
+                    Invite Student
+                  </button>
                 </div>
 
-                {showInviteModal && (
-                  <InviteStudentModal
-                    inviteCode={course?.inviteCode || "XXXX-XXXX"}
-                    onClose={() => setShowInviteModal(false)}
-                  />
-                )}
+                <div className="flex-1 overflow-auto rounded-lg border border-gray-200">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-[#f4f9fc]">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                          Name
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                          Email
+                        </th>
+                        <th className="relative px-6 py-3">
+                          <span className="sr-only">Actions</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 bg-white">
+                      {students.map((s) => (
+                        <tr key={s.id} className="hover:bg-gray-50">
+                          <td className="whitespace-nowrap px-6 py-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {s.name}
+                            </div>
+                          </td>
+                          <td className="whitespace-nowrap px-6 py-4">
+                            <div className="text-sm text-gray-500">
+                              {s.email}
+                            </div>
+                          </td>
+                          <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                            <button
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    "Are you sure you want to remove this student?"
+                                  )
+                                ) {
+                                  setStudents((prev) =>
+                                    prev.filter((st) => st.id !== s.id)
+                                  );
+                                }
+                              }}
+                              className="rounded-full p-1 hover:bg-gray-200 transition-colors"
+                            >
+                              <Trash2 className="h-5 w-5 text-red-500" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {students.length === 0 && (
+                        <tr>
+                          <td
+                            colSpan={3}
+                            className="px-6 py-4 text-center text-sm text-gray-500"
+                          >
+                            No students enrolled yet.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        <NewDiscussion
-          isOpen={isNewDiscussionOpen}
-          onClose={() => setIsNewDiscussionOpen(false)}
-          onSubmit={handleNewDiscussion}
-        />
+        {showInviteModal && (
+          <InviteStudentModal
+            inviteCode={course?.inviteCode || "XXXX-XXXX"}
+            onClose={() => setShowInviteModal(false)}
+          />
+        )}
+          </div>
+            )}
+        </div>
       </div>
+
+      <NewDiscussion
+        isOpen={isNewDiscussionOpen}
+        onClose={() => setIsNewDiscussionOpen(false)}
+        onSubmit={handleNewDiscussion}
+      />
+                 <LessonModal
+             isOpen={lessonModalOpen}
+             onClose={() => setLessonModalOpen(false)}
+             initialData={editingLesson}
+             onSave={handleSaveLesson}
+           />
+
+    </div>
     </div>
   );
 
-  function InviteStudentModal({ inviteCode, onClose }) {
-    const [email, setEmail] = useState("");
+function InviteStudentModal({ inviteCode, onClose }) {
+  const [email, setEmail] = useState("");
 
-    const copyCode = () => {
-      navigator.clipboard.writeText(inviteCode);
-      alert("Copied!");
-    };
+  const copyCode = () => {
+    navigator.clipboard.writeText(inviteCode);
+    alert("Copied!");
+  };
 
-    const sendInvite = () => {
-      // TODO: integrate email-sending logic
-      alert(`Invite sent to ${email}!`);
-      setEmail("");
-    };
+  const sendInvite = () => {
+    // TODO: integrate email-sending logic
+    alert(`Invite sent to ${email}!`);
+    setEmail("");
+  };
 
-    return (
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={onClose}
+    >
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-        onClick={onClose}
+        className="bg-white rounded-lg p-6 w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div
-          className="bg-white rounded-lg p-6 w-full max-w-md"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <h3 className="text-lg font-semibold mb-4">Invite Students</h3>
+        <h3 className="text-lg font-semibold mb-4">Invite Students</h3>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">
-              Class Code
-            </label>
-            <div className="mt-1 flex">
-              <input
-                type="text"
-                readOnly
-                value={inviteCode}
-                className="flex-1 rounded-l-md border border-gray-300 p-2 text-sm"
-              />
-              <button
-                onClick={copyCode}
-                className="rounded-r-md bg-blue-600 px-4 py-2 text-white text-sm hover:bg-blue-700"
-              >
-                Copy
-              </button>
-            </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700">
+            Class Code
+          </label>
+          <div className="mt-1 flex">
+            <input
+              type="text"
+              readOnly
+              value={inviteCode}
+              className="flex-1 rounded-l-md border border-gray-300 p-2 text-sm"
+            />
+            <button
+              onClick={copyCode}
+              className="rounded-r-md bg-blue-600 px-4 py-2 text-white text-sm hover:bg-blue-700"
+            >
+              Copy
+            </button>
           </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">
-              Invite by Email
-            </label>
-            <div className="mt-1 flex">
-              <input
-                type="email"
-                placeholder="student@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 rounded-l-md border border-gray-300 p-2 text-sm"
-              />
-              <button
-                onClick={sendInvite}
-                className="rounded-r-md bg-green-600 px-4 py-2 text-white text-sm hover:bg-green-700"
-              >
-                Send
-              </button>
-            </div>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100"
-          >
-            Close
-          </button>
         </div>
+        
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700">
+            Invite by Email
+          </label>
+          <div className="mt-1 flex">
+            <input
+              type="email"
+              placeholder="student@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1 rounded-l-md border border-gray-300 p-2 text-sm"
+            />
+            <button
+              onClick={sendInvite}
+              className="rounded-r-md bg-green-600 px-4 py-2 text-white text-sm hover:bg-green-700"
+            >
+              Send
+            </button>
+          </div>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100"
+        >
+          Close
+        </button>
       </div>
-    );
-  }
-}
+    </div>
+  );
+}}

@@ -20,6 +20,9 @@ export const AUTH_ENDPOINTS = {
   };
   
   export const FLASHCARD_ENDPOINTS = {
+    // Flashcard statistics endpoints
+    STATS: '/api/flashcards/stats',
+
     // Deck endpoints
     DECKS: '/api/flashcards/decks',
     DECK_DETAIL: (deckId) => `/api/flashcards/decks/${deckId}`,

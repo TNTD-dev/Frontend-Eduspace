@@ -2,6 +2,9 @@ import axiosInstance from '@/api/config/axios';
 import { FLASHCARD_ENDPOINTS } from '@/api/config/endpoints';
 
 export const flashcardAPI = {
+  // Flashcard statistics
+  getFlashcardStats: () => axiosInstance.get(FLASHCARD_ENDPOINTS.STATS),
+
   // Deck CRUD
   getDecks: () => axiosInstance.get(FLASHCARD_ENDPOINTS.DECKS),
   getDeckDetail: (deckId) => axiosInstance.get(FLASHCARD_ENDPOINTS.DECK_DETAIL(deckId)),
