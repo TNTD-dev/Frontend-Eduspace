@@ -1,7 +1,8 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { SquareLibrary, Users2, Pencil, Archive as ArchiveIcon } from "lucide-react";
+import { userAPI } from "@/api";
 
 /**
  * @typedef {Object} Course
@@ -11,7 +12,7 @@ import { SquareLibrary, Users2, Pencil, Archive as ArchiveIcon } from "lucide-re
  * @property {string} categoryColor
  * @property {number} total
  * @property {string} image
- * @property {string} instructor
+ * @property {number} instructorId
  * @property {number} studentCount
  */
 
@@ -21,6 +22,7 @@ import { SquareLibrary, Users2, Pencil, Archive as ArchiveIcon } from "lucide-re
  * @param {(course: Course) => void} props.onEdit - Called when the pencil icon is clicked
  * @param {(course: Course) => void} props.onArchive - Called when the archive icon is clicked
  */
+
 const TeacherCourseCard = ({ course, onEdit, onArchive }) => {
   const {
     id,
@@ -29,9 +31,32 @@ const TeacherCourseCard = ({ course, onEdit, onArchive }) => {
     categoryColor,
     total,
     image,
-    instructor,
+    instructorId,
     studentCount,
   } = course;
+
+  const [instructorName, setInstructorName] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchInstructor = async () => {
+      if (instructorId) {
+        try {
+          const res = await userAPI.getUserById(instructorId);
+          const data = res.data || res;
+          setInstructorName(
+            data.full_name ||
+            (data.firstName && data.lastName ? data.firstName + " " + data.lastName : "Unknown")
+          );
+        } catch (error) {
+          setInstructorName("Unknown");
+        }
+      } else {
+        setInstructorName("");
+      }
+    };
+    fetchInstructor();
+  }, [instructorId]);
 
   return (
     <motion.div
@@ -44,7 +69,7 @@ const TeacherCourseCard = ({ course, onEdit, onArchive }) => {
         <Link to={`/teacher/courses/${id}`}>
           <div className="relative h-32 overflow-hidden">
             <img
-              src={image || "/placeholder.svg"}
+              src={image || "https://img.freepik.com/free-photo/3d-render-online-education-survey-test-concept_107791-15665.jpg?semt=ais_hybrid&w=740"}
               alt={title}
               className="h-full w-full object-cover"
             />
@@ -59,7 +84,7 @@ const TeacherCourseCard = ({ course, onEdit, onArchive }) => {
           <button
             onClick={(e) => {
               e.preventDefault();
-              onEdit(course);
+              navigate(`/teacher/courses/${id}/edit`);
             }}
             className="bg-white text-blue-600 hover:bg-blue-50 p-1 rounded shadow"
             title="Edit Course"
@@ -85,12 +110,12 @@ const TeacherCourseCard = ({ course, onEdit, onArchive }) => {
         </h3>
         <div className="mb-3 flex items-center gap-1 text-xs text-slate-500">
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-xs font-medium text-slate-600">
-            {instructor
+            {instructorName
               .split(" ")
               .map((name) => name[0])
               .join("")}
           </div>
-          <span>{instructor}</span>
+          <span>{instructorName}</span>
         </div>
         <div className="flex items-center justify-between text-xs text-slate-500">
           <div className="flex items-center gap-1">

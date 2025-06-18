@@ -80,7 +80,7 @@ function App() {
           }
         />
         <Route
-          path="/student/courses/:courseId/lessons/:lessonId"
+          path="/student/courses/:courseId/modules/:moduleId/lessons/:lessonId"
           element={
             <ProtectedRoute requiredRole="student">
               <LessonDetail />
@@ -196,6 +196,15 @@ function App() {
         />
 
         <Route
+          path="/teacher/courses/:courseId/modules/:moduleId/lessons/:lessonId"
+          element={
+            <ProtectedRoute requiredRole="teacher">
+              <LessonDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/teacher/courses/:courseId/assignments/:assignmentId"
           element={
             <ProtectedRoute requiredRole="teacher">
@@ -243,8 +252,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-
       </Routes>
     </AuthProvider>
   );

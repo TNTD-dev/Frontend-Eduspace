@@ -7,4 +7,7 @@ export const userAPI = {
   
   updateUser: (data) => 
     axiosInstance.put(USER_ENDPOINTS.PROFILE, data),
+
+  getUserById: (id) =>
+    axiosInstance.get(USER_ENDPOINTS.BY_ID(id)),
 }; 

@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
-import SideBarTeacher from '@/components/layout/SideBarTeacher';
-import NavBar from '@/components/layout/NavBar';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import SideBarTeacher from "@/components/layout/SideBarTeacher";
+import NavBar from "@/components/layout/NavBar";
 import {
   ArrowLeft,
   Upload,
@@ -12,55 +12,46 @@ import {
   List,
   Link as LinkIcon,
   Trash2,
-} from 'lucide-react';
-
+} from "lucide-react";
+import { courseAPI } from "@/api";
 export default function NewCourse() {
   const { courseId } = useParams();
-  const navigate     = useNavigate();
+  const navigate = useNavigate();
 
   // Form state
-  const [title, setTitle]               = useState('');
-  const [category, setCategory]         = useState('');
-  const [instructor, setInstructor]     = useState('');
-  const [descriptionHtml, setDescriptionHtml] = useState('');
-  const [startDate, setStartDate]       = useState('');
-  const [endDate, setEndDate]           = useState('');
-  const [schedule, setSchedule]         = useState('');
-  const [location, setLocation]         = useState('');
-  const [coverFile, setCoverFile]       = useState(null);
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("");
+  const [descriptionHtml, setDescriptionHtml] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [schedule, setSchedule] = useState("");
+  const [location, setLocation] = useState("");
+  const [coverFile, setCoverFile] = useState(null);
 
   const fileInputRef = useRef(null);
-  const editorRef    = useRef(null);
+  const editorRef = useRef(null);
 
-  // If in “edit” mode, load mock data once
+  // If in "edit" mode, load real data once
   useEffect(() => {
     if (courseId) {
-      const mockCourse = {
-        title: 'Existing Course Title',
-        category: 'Mock Category',
-        instructor: 'Jane Doe',
-        description:
-          '<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>',
-        startDate: '2025-06-01',
-        endDate: '2025-07-01',
-        schedule: 'Mon & Wed 5–7pm',
-        location: 'Room 101',
-        coverFileName: '',
-        image: '',
-        status: 'draft',
-      };
-
-      setTitle(mockCourse.title);
-      setCategory(mockCourse.category);
-      setInstructor(mockCourse.instructor);
-      setDescriptionHtml(mockCourse.description);
-      setStartDate(mockCourse.startDate);
-      setEndDate(mockCourse.endDate);
-      setSchedule(mockCourse.schedule);
-      setLocation(mockCourse.location);
-      if (mockCourse.coverFileName) {
-        setCoverFile({ name: mockCourse.coverFileName, isPlaceholder: true });
-      }
+      // Gọi API lấy dữ liệu course thật
+      courseAPI.getCourseById(courseId)
+        .then(res => {
+          const course = res.data;
+          setTitle(course.title || "");
+          setCategory(course.category || "");
+          setDescriptionHtml(course.description || "");
+          setStartDate(course.startDate || "");
+          setEndDate(course.endDate || "");
+          setSchedule(course.schedule || "");
+          setLocation(course.location || "");
+          if (course.image) {
+            setCoverFile({ name: course.image, isPlaceholder: true });
+          }
+        })
+        .catch(err => {
+          console.error("Lỗi lấy dữ liệu course:", err);
+        });
     }
   }, [courseId]);
 
@@ -86,29 +77,28 @@ export default function NewCourse() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const newCourse = {
-      id: courseId || Date.now(),
       title: title.trim(),
       category: category.trim(),
-      instructor: instructor.trim(),
       description: descriptionHtml.trim(),
       startDate,
       endDate,
       schedule: schedule.trim(),
       location: location.trim(),
-      coverFileName: coverFile ? coverFile.name : '',
-      // new fields for draft flow:
-      status: 'draft',
-      image: coverFile ? URL.createObjectURL(coverFile) : '',
+      image: coverFile ? coverFile.name : "", // chỉ gửi tên file nếu backend chỉ lưu tên
     };
-
-    // pass the course via navigate state for mock-list merging
-    navigate('/teacher/courses', { state: { newCourse } });
+    try {
+      await courseAPI.createCourse(newCourse);
+      navigate("/teacher/courses");
+    } catch (error) {
+      alert("Tạo khóa học thất bại!");
+      console.error(error);
+    }
   };
 
   const handleCancel = () => {
-    navigate('/teacher/courses');
+    navigate("/teacher/courses");
   };
 
   return (
@@ -168,20 +158,6 @@ export default function NewCourse() {
                   />
                 </div>
 
-                {/* Instructor */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Instructor
-                  </label>
-                  <input
-                    type="text"
-                    className="mt-1 w-full bg-white rounded-md border border-gray-300 p-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    placeholder="Instructor Name"
-                    value={instructor}
-                    onChange={(e) => setInstructor(e.target.value)}
-                  />
-                </div>
-
                 {/* Description */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
@@ -193,35 +169,35 @@ export default function NewCourse() {
                       <button
                         type="button"
                         className="p-1 hover:bg-gray-100 rounded"
-                        onClick={() => execCommand('bold')}
+                        onClick={() => execCommand("bold")}
                       >
                         <Bold className="h-5 w-5 text-gray-600" />
                       </button>
                       <button
                         type="button"
                         className="p-1 hover:bg-gray-100 rounded"
-                        onClick={() => execCommand('italic')}
+                        onClick={() => execCommand("italic")}
                       >
                         <Italic className="h-5 w-5 text-gray-600" />
                       </button>
                       <button
                         type="button"
                         className="p-1 hover:bg-gray-100 rounded"
-                        onClick={() => execCommand('underline')}
+                        onClick={() => execCommand("underline")}
                       >
                         <Underline className="h-5 w-5 text-gray-600" />
                       </button>
                       <button
                         type="button"
                         className="p-1 hover:bg-gray-100 rounded"
-                        onClick={() => execCommand('strikeThrough')}
+                        onClick={() => execCommand("strikeThrough")}
                       >
                         <Strikethrough className="h-5 w-5 text-gray-600" />
                       </button>
                       <button
                         type="button"
                         className="p-1 hover:bg-gray-100 rounded"
-                        onClick={() => execCommand('insertUnorderedList')}
+                        onClick={() => execCommand("insertUnorderedList")}
                       >
                         <List className="h-5 w-5 text-gray-600" />
                       </button>
@@ -229,8 +205,8 @@ export default function NewCourse() {
                         type="button"
                         className="p-1 hover:bg-gray-100 rounded"
                         onClick={() => {
-                          const url = window.prompt('Enter URL:', 'https://');
-                          if (url) execCommand('createLink', url);
+                          const url = window.prompt("Enter URL:", "https://");
+                          if (url) execCommand("createLink", url);
                         }}
                       >
                         <LinkIcon className="h-5 w-5 text-gray-600" />
@@ -240,8 +216,8 @@ export default function NewCourse() {
                         className="ml-auto p-1 hover:bg-gray-100 rounded"
                         onClick={() => {
                           if (editorRef.current) {
-                            editorRef.current.innerHTML = '';
-                            setDescriptionHtml('');
+                            editorRef.current.innerHTML = "";
+                            setDescriptionHtml("");
                           }
                         }}
                       >
@@ -329,7 +305,10 @@ export default function NewCourse() {
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
                       e.preventDefault();
-                      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                      if (
+                        e.dataTransfer.files &&
+                        e.dataTransfer.files.length > 0
+                      ) {
                         setCoverFile(e.dataTransfer.files[0]);
                         e.dataTransfer.clearData();
                       }
@@ -355,7 +334,7 @@ export default function NewCourse() {
                     <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
                       <span>
                         {coverFile.name}
-                        {coverFile.isPlaceholder && ' (current)'}
+                        {coverFile.isPlaceholder && " (current)"}
                       </span>
                     </div>
                   )}
@@ -373,7 +352,7 @@ export default function NewCourse() {
                     onClick={handleSave}
                     className="rounded-md bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
                   >
-                    {courseId ? 'Update Course' : 'Create Course'}
+                    {courseId ? "Update Course" : "Create Course"}
                   </button>
                 </div>
               </div>

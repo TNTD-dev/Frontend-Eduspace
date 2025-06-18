@@ -25,6 +25,8 @@ import {
 import { currentCourses, completedCourses } from "@/data/mock/courseData";
 import NavBar from "@/components/layout/NavBar";
 import NewDiscussion from "@/components/features/course/NewDiscussion";
+import { courseEnrollmentAPI } from '@/api';
+import { toast } from 'sonner';
 
 // Combine current and completed courses into a single array for easier course lookup
 const allCourses = [...currentCourses, ...completedCourses];
@@ -41,29 +43,33 @@ const CourseDetail = () => {
   const [expandedModules, setExpandedModules] = useState({}); // Tracks which modules are expanded
   const [isNewDiscussionOpen, setIsNewDiscussionOpen] = useState(false); // Controls if the new discussion modal is open
 
-  // Fetch course data when component mounts or courseId changes
+  // Fetch course data from API when component mounts or courseId changes
   useEffect(() => {
-    // Simulate API call to fetch course details
-    const fetchCourse = () => {
+    const fetchCourse = async () => {
       setLoading(true);
-      setTimeout(() => {
-        // Find course by ID in the combined courses array
-        const foundCourse = allCourses.find((c) => c.id === parseInt(courseId));
-        setCourse(foundCourse || null);
-
-        // Initialize all modules as expanded by default
-        if (foundCourse && foundCourse.modules) {
-          const initialExpandedState = {};
-          foundCourse.modules.forEach((module) => {
-            initialExpandedState[module.id] = true;
-          });
-          setExpandedModules(initialExpandedState);
+      try {
+        const res = await courseEnrollmentAPI.getMyCourseDetail(courseId);
+        if (res.success) {
+          setCourse(res.data);
+          // Initialize all modules as expanded by default
+          if (res.data.modules) {
+            const initialExpandedState = {};
+            res.data.modules.forEach((module) => {
+              initialExpandedState[module.id] = true;
+            });
+            setExpandedModules(initialExpandedState);
+          }
+        } else {
+          setCourse(null);
+          toast.error(res.message || 'Course not found');
         }
-
+      } catch (error) {
+        setCourse(null);
+        toast.error('Failed to fetch course detail');
+      } finally {
         setLoading(false);
-      }, 500); // Simulate network delay
+      }
     };
-
     fetchCourse();
   }, [courseId]);
 
@@ -80,8 +86,8 @@ const CourseDetail = () => {
   const isCompletedCourse = course && course.progress === course.total; // Check if it's a completed course
 
   // Add this function to handle lesson click
-  const handleLessonClick = (lessonId) => {
-    navigate(`/student/courses/${courseId}/lessons/${lessonId}`);
+  const handleLessonClick = (lessonId, moduleId) => {
+    navigate(`/student/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`);
   };
 
   const handleAssignmentClick = (assignmentId) => {
@@ -173,7 +179,7 @@ const CourseDetail = () => {
             {/* Course content will go here */}
             <div
               className="relative rounded-t-lg overflow-hidden h-64 bg-cover bg-center"
-              style={{ backgroundImage: `url(${course.image})` }}
+              style={{ backgroundImage: `url(${course.image || "/cover/placeholder-course.jpg"})` }}
             >
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30"></div>
               <div className="absolute bottom-0 left-0 w-full p-6">
@@ -204,7 +210,7 @@ const CourseDetail = () => {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-white">
-                        {course.instructor}
+                        {course.instructorName}
                       </p>
                     </div>
                   </div>
@@ -308,7 +314,7 @@ const CourseDetail = () => {
                                 Course Duration
                               </p>
                               <p className="text-sm text-gray-600">
-                                {course.startDate} - {course.endDate}
+                                {course.startDate.split('T')[0]} - {course.endDate.split('T')[0]}
                               </p>
                             </div>
                           </div>
@@ -395,12 +401,7 @@ const CourseDetail = () => {
                 </h2>
                 <div className="mb-4 flex items-center justify-between">
                   <p className="text-sm text-gray-600">
-                    {course.modules?.length || 0} modules •{" "}
-                    {course.modules?.reduce(
-                      (total, module) => total + module.lessons.length,
-                      0
-                    ) || 0}{" "}
-                    lessons
+                    Course Content
                   </p>
                   {isCurrentCourse && (
                     <div className="flex items-center gap-2">
@@ -436,7 +437,7 @@ const CourseDetail = () => {
                               {module.title}
                             </h3>
                             <p className="text-sm text-gray-500">
-                              {module.lessons.length} lessons
+                              {(module.Lessons?.length || 0)} lessons
                             </p>
                           </div>
                         </div>
@@ -451,18 +452,20 @@ const CourseDetail = () => {
 
                       {expandedModules[module.id] && (
                         <div className="divide-y border-t">
-                          {module.lessons.map((lesson) => (
+                          {(module.Lessons || []).map((lesson) => (
                             <div
                               key={lesson.id}
                               className="flex items-center justify-between p-4 hover:bg-gray-50 cursor-pointer"
-                              onClick={() => handleLessonClick(lesson.id)}
+                              onClick={() => handleLessonClick(lesson.id, module.id)}
                             >
                               <div className="flex items-center gap-3">
                                 <div className="rounded-full bg-gray-100 p-2 text-gray-500">
-                                  {lesson.completed ? (
-                                    <CheckCircle className="h-4 w-4 text-green-500" />
-                                  ) : (
+                                  {lesson.type === 'document' ? (
+                                    <FileText className="h-4 w-4" />
+                                  ) : lesson.type === 'video' ? (
                                     <Play className="h-4 w-4" />
+                                  ) : (
+                                    <FileText className="h-4 w-4" />
                                   )}
                                 </div>
                                 <div>
@@ -479,7 +482,7 @@ const CourseDetail = () => {
                                   className="rounded-lg bg-blue-500 px-3 py-1 text-xs font-medium text-white hover:bg-blue-600"
                                   onClick={(e) => {
                                     e.stopPropagation(); // Prevent triggering the parent div's onClick
-                                    handleLessonClick(lesson.id);
+                                    handleLessonClick(lesson.id, module.id);
                                   }}
                                 >
                                   {lesson.completed ? "Review" : "Start"}
@@ -680,10 +683,8 @@ const CourseDetail = () => {
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 overflow-hidden rounded-full">
                             <img
-                              src={
-                                "/placeholder.jpg" || discussion.author.avatar
-                              }
-                              alt={discussion.author.name}
+                              src={discussion.author?.avatar || "/placeholder.jpg"}
+                              alt={discussion.author?.name || "Unknown"}
                               className="h-full w-full object-cover"
                             />
                           </div>
@@ -700,13 +701,11 @@ const CourseDetail = () => {
                             </div>
                             <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
                               <span className="font-medium">
-                                {discussion.author.name}
+                                {discussion.author?.name || `${discussion.author?.firstName || ''} ${discussion.author?.lastName || ''}`.trim() || "Unknown"}
                               </span>
                               <span>•</span>
                               <span>
-                                {discussion.author.role === "teacher"
-                                  ? "Teacher"
-                                  : "Student"}
+                                {discussion.author?.role === "teacher" ? "Teacher" : "Student"}
                               </span>
                               <span>•</span>
                               <span>{discussion.createdAt}</span>

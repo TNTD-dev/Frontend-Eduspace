@@ -1,23 +1,55 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import SideBarStudent from "@/components/layout/SideBarStudent";
 import NavBar from "@/components/layout/NavBar";
 import { CourseCard, CourseCardCompleted } from "@/components/features/course/CourseCard";
-import { currentCourses, completedCourses } from "@/data/mock/courseData";
+import EnrollCodeDialog from "@/components/features/course/EnrollCodeDialog";
+import { courseEnrollmentAPI } from '@/api/modules/courseEnrollment.api';
+import { toast } from 'sonner';
 
 const CoursePage = () => {
   const [courseType, setCourseType] = useState("all");
+  const [isEnrollDialogOpen, setIsEnrollDialogOpen] = useState(false);
+  const [courses, setCourses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Memoize filtered courses to prevent unnecessary recalculations
-  const filteredCourses = useMemo(() => {
-    switch (courseType) {
-      case "current":
-        return { current: currentCourses, completed: [] };
-      case "completed":
-        return { current: [], completed: completedCourses };
-      default:
-        return { current: currentCourses, completed: completedCourses };
+  const fetchCourses = async () => {
+    try {
+      setIsLoading(true);
+      const response = await courseEnrollmentAPI.getMyCourses();
+      if (response.success) {
+        // Transform the data to match CourseCard props
+        const transformedCourses = response.data.map(course => ({
+          id: course.id,
+          title: course.title,
+          category: course.category,
+          categoryColor: course.categoryColor,
+          image: course.image,
+          progress: course.progress || 0,
+          total: course.total || 0,
+          instructorName: course.instructorName || '',
+          endDate: course.endDate,
+          status: course.status
+        }));
+        console.log('Transformed courses:', transformedCourses); // Debug log
+        setCourses(transformedCourses);
+      }
+    } catch (error) {
+      toast.error('Failed to fetch courses');
+      console.error('Error fetching courses:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [courseType]);
+  };
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  // Filter courses based on type
+  const filteredCourses = {
+    current: courses.filter(course => course.status === 'current'),
+    completed: courses.filter(course => course.status === 'completed')
+  };
 
   const renderCourseSection = (title, courses, isCompleted = false) => {
     if (courses.length === 0) return null;
@@ -55,8 +87,14 @@ const CoursePage = () => {
             <div className="flex flex-col gap-8">
               <div className="flex flex-col h-full">
                 {/* Course Details */}
-                <div className="mb-8">
+                <div className="mb-8 flex justify-between items-center">
                   <h1 className="text-2xl font-bold text-[#303345]">Courses</h1>
+                  <button
+                    onClick={() => setIsEnrollDialogOpen(true)}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Enroll with Code
+                  </button>
                 </div>
 
                 {/* Course Type Filter */}
@@ -95,14 +133,35 @@ const CoursePage = () => {
                   </div>
                 </div>
 
-                {/* Course Sections */}
-                {renderCourseSection("Current Courses", filteredCourses.current)}
-                {renderCourseSection("Completed Courses", filteredCourses.completed, true)}
+                {/* Loading State */}
+                {isLoading ? (
+                  <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : (
+                  <>
+                    {courseType === "all" && (
+                      <>
+                        {renderCourseSection("Current Courses", filteredCourses.current)}
+                        {renderCourseSection("Completed Courses", filteredCourses.completed, true)}
+                      </>
+                    )}
+                    {courseType === "current" && renderCourseSection("Current Courses", filteredCourses.current)}
+                    {courseType === "completed" && renderCourseSection("Completed Courses", filteredCourses.completed, true)}
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Enroll Code Dialog */}
+      <EnrollCodeDialog
+        isOpen={isEnrollDialogOpen}
+        onClose={() => setIsEnrollDialogOpen(false)}
+        onSuccess={fetchCourses}
+      />
     </div>
   );
 };

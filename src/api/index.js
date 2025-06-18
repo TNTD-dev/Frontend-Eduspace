@@ -4,5 +4,7 @@ export { courseEnrollmentAPI } from './modules/courseEnrollment.api';
 export { scheduleAPI } from './modules/schedule.api';
 export { tagsAPI } from './modules/tags.api';
 export { flashcardAPI } from './modules/flashcards.api';
-
-
+export { courseAPI } from './modules/courses.api';
+export { courseModuleAPI } from './modules/courseModule.api';
+export { moduleLessonAPI } from './modules/moduleLesson.api';
+export { moduleAssignmentAPI } from './modules/moduleAssignment.api';

@@ -8,15 +8,38 @@ export const AUTH_ENDPOINTS = {
   };
   
   export const COURSE_ENDPOINTS = {
-    BASE: '/courses',
-    BY_ID: (id) => `/courses/${id}`,
-    LESSONS: (courseId) => `/courses/${courseId}/lessons`,
+    BASE: '/api/courses',
+    BY_ID: (id) => `/api/courses/${id}`,
+    CREATE: '/api/courses/createNewCourse',
+    UPDATE: (id) => `/api/courses/${id}/updateCourse`,
+    DELETE: (id) => `/api/courses/${id}/deleteCourse`,
+    PROGRESS: (id) => `/api/courses/${id}/progress`,
+  };
+
+  export const MODULE_ENDPOINTS = {
+    BASE: '/api/courses/:courseId/modules',
+    BY_ID: (courseId, moduleId) => `/api/courses/${courseId}/modules/${moduleId}`,
+    CREATE: '/api/courses/:courseId/modules',
+    UPDATE: (courseId, moduleId) => `/api/courses/${courseId}/modules/${moduleId}`,
+    DELETE: (courseId, moduleId) => `/api/courses/${courseId}/modules/${moduleId}`,
+    UPDATE_ORDER: (courseId, moduleId) => `/api/courses/${courseId}/modules/${moduleId}/order`,
   };
   
   export const LESSON_ENDPOINTS = {
-    BASE: '/lessons',
-    BY_ID: (id) => `/lessons/${id}`,
-    QUIZZES: (lessonId) => `/lessons/${lessonId}/quizzes`,
+    BASE: '/api/courses/:courseId/modules/:moduleId/lessons',
+    BY_ID: (courseId, moduleId, lessonId) => `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`,
+    CREATE: '/api/courses/:courseId/modules/:moduleId/lessons',
+    UPDATE: (courseId, moduleId, lessonId) => `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`,
+    DELETE: (courseId, moduleId, lessonId) => `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`,
+    UPDATE_ORDER: (courseId, moduleId, lessonId) => `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/order`,
+  };
+
+  export const ASSIGNMENT_ENDPOINTS = {
+    BASE: '/api/courses/:courseId/modules/:moduleId/assignments',
+    BY_ID: (courseId, moduleId, assignmentId) => `/api/courses/${courseId}/modules/${moduleId}/assignments/${assignmentId}`,
+    CREATE: '/api/courses/:courseId/modules/:moduleId/assignments',
+    UPDATE: (courseId, moduleId, assignmentId) => `/api/courses/${courseId}/modules/${moduleId}/assignments/${assignmentId}`,
+    DELETE: (courseId, moduleId, assignmentId) => `/api/courses/${courseId}/modules/${moduleId}/assignments/${assignmentId}`,
   };
   
   export const FLASHCARD_ENDPOINTS = {
@@ -52,12 +75,15 @@ export const AUTH_ENDPOINTS = {
 export const USER_ENDPOINTS = {
   USER: "/user", // để gọi GET /
   PROFILE: "/user/profile", // để gọi PUT /profile
+  BY_ID: (id) => `/user/${id}`,
 
   // ... other endpoint
 };
 
 export const COURSE_ENROLLMENT_ENDPOINTS = {
   MY_COURSES: '/api/coursesEnrollment/my-courses',
+  ENROLL_BY_CODE: '/api/coursesEnrollment/enroll-by-code',
+  MY_COURSE_DETAIL: (courseId) => `/api/coursesEnrollment/my-course/${courseId}`,
   // ... các endpoint khác nếu có
 };
 

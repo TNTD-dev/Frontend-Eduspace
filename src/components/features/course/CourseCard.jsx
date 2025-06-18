@@ -45,7 +45,7 @@ const CourseCard = ({ course }) => {
       <Link to={`/student/courses/${id}`}>
         <div className="relative h-32 overflow-hidden">
           <img
-            src={image || "/placeholder.svg"}
+            src={image || "/cover/placeholder-course.jpg"}
             alt={title}
             className="h-full w-full object-cover"
           />

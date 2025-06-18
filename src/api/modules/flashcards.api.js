@@ -18,7 +18,7 @@ export const flashcardAPI = {
   createCard: (data) => axiosInstance.post(FLASHCARD_ENDPOINTS.CREATE_CARD, data),
   updateCard: (cardId, data) => axiosInstance.put(FLASHCARD_ENDPOINTS.UPDATE_CARD(cardId), data),
   deleteCard: (cardId) => axiosInstance.delete(FLASHCARD_ENDPOINTS.DELETE_CARD(cardId)),
-
+ 
   // Spaced repetition
   getDueCards: () => axiosInstance.get(FLASHCARD_ENDPOINTS.DUE),
   getDueCardsByDate: (date) => axiosInstance.get(FLASHCARD_ENDPOINTS.DUE_BY_DATE(date)),

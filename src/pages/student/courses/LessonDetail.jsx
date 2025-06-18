@@ -10,36 +10,45 @@ import {
   Play,
 } from "lucide-react";
 import { currentCourses, completedCourses } from "@/data/mock/courseData";
-
+import { useAuth } from "@/context/AuthContext";
+import SideBarTeacher from "@/components/layout/SideBarTeacher";
+import { moduleLessonAPI } from "@/api/modules/moduleLesson.api";
 const allCourses = [...currentCourses, ...completedCourses];
 
 const LessonDetail = () => {
-  const { courseId, lessonId } = useParams();
+  const { userRole } = useAuth();
+  const { courseId, moduleId, lessonId } = useParams();
   const [lesson, setLesson] = useState(null);
-  const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Find course and lesson from mock data
-    const foundCourse = allCourses.find(
-      (course) => course.id === parseInt(courseId)
-    );
-    setCourse(foundCourse);
-
-    if (foundCourse) {
-      const foundLesson = foundCourse.modules
-        .flatMap((module) => module.lessons)
-        .find((lesson) => lesson.id === parseInt(lessonId));
-      setLesson(foundLesson);
+    async function fetchLesson() {
+      try {
+        const res = await moduleLessonAPI.getLessonById(courseId, moduleId, lessonId);
+        console.log('Raw response:', res);
+        const lessonData = res.data.data;
+        setLesson(lessonData);
+        // Log lesson data and full URL
+        console.log('Lesson data:', lessonData);
+        if (lessonData?.contentURL) {
+          console.log('Content URL:', lessonData.contentURL);
+          console.log('Full URL:', `${import.meta.env.VITE_API_URL}${lessonData.contentURL}`);
+          console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
+        }
+      } catch (err) {
+        console.error('Error fetching lesson:', err);
+        setLesson(null);
+      } finally {
+        setLoading(false);
+      }
     }
-
-    setLoading(false);
-  }, [courseId, lessonId]);
+    fetchLesson();
+  }, [courseId, moduleId, lessonId]);
 
   if (loading) {
     return (
       <div className="flex min-h-screen bg-[#f4f9fc]">
-        <SideBarStudent />
+        {userRole === 'teacher' ? <SideBarTeacher /> : <SideBarStudent />}
         <div className="flex-1 flex flex-col h-screen">
           <div className="flex-1 overflow-auto">
             <div className="mx-auto max-w-7xl px-4 py-6">
@@ -58,10 +67,10 @@ const LessonDetail = () => {
     );
   }
 
-  if (!course || !lesson) {
+  if (!lesson) {
     return (
       <div className="flex min-h-screen bg-[#f4f9fc]">
-        <SideBarStudent />
+        {userRole === 'teacher' ? <SideBarTeacher /> : <SideBarStudent />}
         <div className="flex-1 flex flex-col h-screen">
           <div className="flex-1 overflow-auto">
             <div className="mx-auto max-w-7xl px-4 py-6">
@@ -75,7 +84,7 @@ const LessonDetail = () => {
                     The lesson you're looking for doesn't exist.
                   </p>
                   <Link
-                    to={`/student/courses/${courseId}`}
+                    to={`/${userRole}/courses/${courseId}`}
                     className="mt-4 inline-block text-blue-500 hover:text-blue-600"
                   >
                     Return to Course
@@ -91,7 +100,7 @@ const LessonDetail = () => {
 
   return (
     <div className="flex min-h-screen bg-[#f4f9fc]">
-      <SideBarStudent />
+      {userRole === 'teacher' ? <SideBarTeacher /> : <SideBarStudent />}
       <div className="flex-1 flex flex-col h-screen">
         <div className="flex-1 overflow-auto">
           <div className="mx-auto max-w-7xl px-4 py-6">
@@ -100,7 +109,7 @@ const LessonDetail = () => {
             {/* Lesson Header */}
             <div className="mb-6">
               <Link
-                to={`/student/courses/${courseId}`}
+                to={`/${userRole}/courses/${courseId}`}
                 className="inline-flex items-center gap-2 text-gray-600 hover:text-[#1f53f3]"
               >
                 <ArrowLeft className="h-5 w-5" />
@@ -114,65 +123,34 @@ const LessonDetail = () => {
             {/* Lesson Content */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Main Content */}
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-3">
                 <div className="rounded-lg border bg-white p-6 shadow-sm">
-                  {lesson.type === "video" ? (
+                  {lesson.type === "video" && lesson.contentURL ? (
                     <div className="aspect-video bg-black rounded-lg">
                       <video
-                        src={lesson.content.videoUrl}
+                        src={`${import.meta.env.VITE_API_URL}${lesson.contentURL}`}
                         controls
                         className="w-full h-full rounded-lg"
                       />
                     </div>
-                  ) : (
+                  ) : lesson.type === "document" && lesson.contentURL ? (
                     <div className="prose max-w-none">
-                      <iframe
-                        src={lesson.content.document}
-                        className="w-full h-[600px]"
-                        title={lesson.title}
-                      />
+                      <object
+                        data={`${import.meta.env.VITE_API_URL}${lesson.contentURL}`}
+                        type="application/pdf"
+                        className="w-full h-[600px] rounded-lg"
+                      >
+                        <p>Unable to display PDF file. <a href={`${import.meta.env.VITE_API_URL}${lesson.contentURL}`} target="_blank" rel="noopener noreferrer">Download</a> instead.</p>
+                      </object>
                     </div>
+                  ) : (
+                    <div className="text-gray-500">No file available for this lesson.</div>
                   )}
                 </div>
               </div>
 
-              {/* Sidebar */}
-              <div className="lg:col-span-1">
-                <div className="rounded-lg border bg-white p-6 shadow-sm">
-                  <h2 className="text-lg font-bold text-gray-800 mb-4">
-                    Lesson Resources
-                  </h2>
-                  <div className="space-y-4">
-                    {lesson.content.resources?.map((resource) => (
-                      <div
-                        key={resource.id}
-                        className="flex items-center justify-between p-3 rounded-lg border"
-                      >
-                        <div className="flex items-center gap-3">
-                          <FileText className="h-5 w-5 text-blue-500" />
-                          <span className="text-sm font-medium">
-                            {resource.title}
-                          </span>
-                        </div>
-                        <a
-                          href={resource.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:text-blue-600"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      </div>
-                    ))}
 
-                    {(!lesson.content.resources || lesson.content.resources.length === 0) && (
-                      <div className="text-center py-4 text-gray-500">
-                        No additional resources available for this lesson.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              
             </div>
           </div>
         </div>

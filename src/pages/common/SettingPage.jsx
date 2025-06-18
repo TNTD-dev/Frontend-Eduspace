@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState,useEffect, useRef } from 'react'
 import SideBarStudent from '@/components/layout/SideBarStudent'
 import SideBarTeacher from '@/components/layout/SideBarTeacher'
 import NavBar from '@/components/layout/NavBar'
@@ -10,6 +10,8 @@ import { userData } from '@/data/mock/userData'
 import { Facebook, Github, CircleUser, Mail, Bell, Globe, MapPin, User, Lock, Share2, Trash2 } from 'lucide-react'
 import { FcGoogle } from "react-icons/fc"
 import { useAuth } from '@/context/AuthContext'
+import { userAPI } from '@/api'
+import { toast } from 'sonner'
 
 const menuItems = [
   { label: 'Profile', icon: <User className="w-5 h-5" /> },
@@ -21,8 +23,17 @@ const menuItems = [
 ]
 
 const SettingPage = () => {
-  const { userRole } = useAuth();
-  const [profile, setProfile] = useState(userData.profile)
+  const { userRole, setUser: setAuthUser } = useAuth();
+  const [profile, setProfile] = useState({
+    avatar: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    city: "",
+    dateOfBirth: "",
+    gender: "",
+  })
   const [selectedTab, setSelectedTab] = useState(0)
   const fileInputRef = useRef(null)
   const [linkedAccounts, setLinkedAccounts] = useState({
@@ -34,6 +45,29 @@ const SettingPage = () => {
     email: true,
     web: false,
   });
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await userAPI.getUser()
+        setAuthUser(res.data)
+        setProfile({
+          avatar: res.data.avatar || "",
+          firstName: res.data.firstName || "",
+          lastName: res.data.lastName || "",
+          email: res.data.email || "",
+          phone: res.data.phone || "",
+          city: res.data.city || "",
+          dateOfBirth: res.data.dateOfBirth ? res.data.dateOfBirth.slice(0,10) : "",
+          gender: res.data.gender || "",
+        })
+      } catch (error) {
+        setError(error)
+      }
+    }
+    fetchUser()
+  }, [])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -67,6 +101,38 @@ const SettingPage = () => {
     setNotifications((prev) => ({ ...prev, [type]: !prev[type] }));
   };
 
+  const handleSaveProfile = async (e) => {
+    e.preventDefault()
+    try {
+      const updatePayload = {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        email: profile.email,
+        phone: profile.phone,
+        city: profile.city,
+        dateOfBirth: profile.dateOfBirth,
+        gender: profile.gender,
+      }
+      const res = await userAPI.updateUser(updatePayload)
+      const updatedUser = res.data;
+      // If backend returns date including time, normalize for input
+      if(updatedUser?.dateOfBirth){
+         updatedUser.dateOfBirth = updatedUser.dateOfBirth.slice(0,10);
+      }
+      toast.success("Profile updated successfully")
+      setProfile((prev) => ({ ...prev, ...updatedUser }))
+      setAuthUser(updatedUser)
+      localStorage.setItem("user", JSON.stringify(updatedUser))
+      // Reload the page so that every component picks up new user info
+      setTimeout(() => {
+        window.location.reload();
+      }, 300);
+    } catch (err) {
+      const message = err?.response?.data?.message || "Failed to update profile"
+      toast.error(message)
+    }
+  }
+
   // Nội dung từng tab
   const renderTabContent = () => {
     switch (selectedTab) {
@@ -94,7 +160,7 @@ const SettingPage = () => {
                 </Button>
               </div>
               {/* Form fields */}
-              <form className="flex-1 grid grid-cols-2 gap-6">
+              <form className="flex-1 grid grid-cols-2 gap-6" onSubmit={handleSaveProfile}>
                 <div>
                   <Label htmlFor="firstName">First Name</Label>
                   <Input id="firstName" name="firstName" value={profile.firstName} className="mt-1 bg-white w-full border-0" onChange={handleInputChange} />
@@ -158,6 +224,11 @@ const SettingPage = () => {
                       <span>female</span>
                     </label>
                   </div>
+                </div>
+                <div className="col-span-2 flex justify-end mt-4">
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow">
+                    Save
+                  </Button>
                 </div>
               </form>
             </div>

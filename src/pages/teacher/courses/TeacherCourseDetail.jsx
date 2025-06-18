@@ -1,6 +1,6 @@
 // src/pages/teacher/TeacherCourseDetail.jsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import SideBarTeacher from "@/components/layout/SideBarTeacher";
 import EditableCourseHeader from "@/components/features/course/teacher/EditableCourseHeader";
 import LessonModal from "@/components/features/course/teacher/LessonModal";
@@ -33,6 +33,10 @@ import { currentCourses, completedCourses } from "@/data/mock/courseData";
 import NavBar from "@/components/layout/NavBar";
 import NewDiscussion from "@/components/features/course/NewDiscussion";
 import { studentData } from "@/data/mock/mockStudentData";
+import { courseAPI, courseModuleAPI, moduleLessonAPI } from "@/api";
+import { toast } from "sonner";
+import AddModuleModal from '@/components/features/course/teacher/AddModuleModal';
+
 
 const allCourses = [...currentCourses, ...completedCourses];
 
@@ -40,6 +44,7 @@ export default function TeacherCourseDetail() {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+
 
   const [activeTab, setActiveTab] = useState("content");
   const [course, setCourse] = useState(null);
@@ -67,51 +72,74 @@ export default function TeacherCourseDetail() {
   const [students, setStudents] = useState([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
 
-  const isPublished = course?.status === "published";
+  const [showAddModuleModal, setShowAddModuleModal] = useState(false);
+
+  const [editingModule, setEditingModule] = useState(null);
+  const [showEditModuleModal, setShowEditModuleModal] = useState(false);
+  const editDialogRef = useRef(null);
+
+  const [showAddLessonModal, setShowAddLessonModal] = useState(false);
+  const [currentModuleId, setCurrentModuleId] = useState(null);
+
+  const isPublished = course?.status === "current";
   const isArchived = course?.status === "archived";
+
+  const dialogRef = useRef(null);
 
   //load details
   useEffect(() => {
     setLoading(true);
-    setTimeout(() => {
-      const found = allCourses.find((c) => c.id === parseInt(courseId));
-      setCourse(found || null);
+    Promise.all([
+      courseAPI.getCourseById(courseId),
+      courseModuleAPI.getAllModules(courseId)
+    ])
+      .then(([resCourse, resModules]) => {
+        const courseData = resCourse.data;
+        setCourse(courseData);
 
-      if (found) {
-        //modules
-        if (found.modules) {
-          setModulesState(
-            found.modules.map((m) => ({
-              ...m,
-              lessons: m.lessons ? [...m.lessons] : []
-            }))
-          );
-          const initialExpanded = {};
-          found.modules.forEach((m) => {
-            initialExpanded[m.id] = true;
-          });
-          setExpandedModules(initialExpanded);
-        } else {
-          setModulesState([]);
-          setExpandedModules({});
-        }
+        console.log('API Response:', resModules);
+        console.log('Response data:', resModules.data);
+        console.log('Is Array?', Array.isArray(resModules.data));
+        console.log('Data type:', typeof resModules.data);
+        console.log('Data structure:', JSON.stringify(resModules.data, null, 2));
 
-        //draft fields
-        setDraftDescription(found.description || "");
-        setDraftStartDate(found.startDate || "");
-        setDraftEndDate(found.endDate || "");
-        setDraftSchedule(found.schedule || "");
-        setDraftLocation(found.location || "");
+        // Set draft fields
+        setDraftDescription(courseData.description || "");
+        setDraftStartDate(courseData.startDate || "");
+        setDraftEndDate(courseData.endDate || "");
+        setDraftSchedule(courseData.schedule || "");
+        setDraftLocation(courseData.location || "");
 
-        //students (mock)
-        setStudents(studentData[found.id] || []);
-      } else {
-        setModulesState([]);
-        setExpandedModules({});
-      }
+        // Set modules từ API - Fix: Access the data array correctly
+        const modulesData = resModules.data.data || [];
+        console.log('Processed modules data:', modulesData);
+        
+        // Sort modules by order before setting state
+        const sortedModules = modulesData.sort((a, b) => a.order - b.order);
+        
+        setModulesState(
+          sortedModules.map((m) => ({
+            ...m,
+            lessons: m.Lessons ? [...m.Lessons].sort((a, b) => a.order - b.order) : []
+          }))
+        );
+        
+        const initialExpanded = {};
+        sortedModules.forEach((m) => {
+          initialExpanded[m.id] = true;
+        });
+        setExpandedModules(initialExpanded);
 
-      setLoading(false);
-    }, 500);
+        // TODO: Replace with real API call for students
+        setStudents(studentData[courseData.id] || []);
+      })
+      .catch(err => {
+        console.error("Error fetching course details:", err);
+        toast.error("Failed to load course details");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [courseId]);
 
   //handle add assignment
@@ -166,15 +194,10 @@ export default function TeacherCourseDetail() {
     }
   }, [location.state, course, navigate]);
 
+  // Thêm useEffect log modulesState mỗi khi thay đổi
   useEffect(() => {
-    if (course && location.state?.fromModule) {
-      const newModule = location.state.fromModule;
-      setModulesState(prev => [...prev, newModule]);
-      setExpandedModules(prev => ({ ...prev, [newModule.id]: true }));
-      // clear state so it doesn’t re-fire
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  }, [location.state, course, navigate, location.pathname]);
+    console.log('modulesState updated:', modulesState);
+  }, [modulesState]);
 
   //module and lessons
   const toggleModule = (mid) => {
@@ -182,9 +205,19 @@ export default function TeacherCourseDetail() {
   };
 
   const handleAddModule = () => {
-  navigate(`/teacher/courses/${courseId}/modules/new`);
+    if (dialogRef.current) dialogRef.current.showModal();
+    setShowAddModuleModal(true);
   };
 
+  const handleCloseDialog = () => {
+    if (dialogRef.current) dialogRef.current.close();
+    setShowAddModuleModal(false);
+  };
+
+  const handleModuleAdded = (newModule) => {
+    // Reload page to fetch latest modules from server
+    window.location.reload();
+  };
 
   const handleAddLesson = (moduleId) => {
     const lessonTitle = prompt("Enter new lesson title:");
@@ -207,38 +240,86 @@ export default function TeacherCourseDetail() {
   const handleEditModule = (moduleId) => {
     const mod = modulesState.find((m) => m.id === moduleId);
     if (!mod) return;
-    navigate(
-      `/teacher/courses/${courseId}/modules/${moduleId}/edit`,
-      { state: { fromModule: mod } }
-    );
+    setEditingModule(mod);
+    setShowEditModuleModal(true);
+    if (editDialogRef.current) editDialogRef.current.showModal();
   };
 
+  const handleCloseEditDialog = () => {
+    setShowEditModuleModal(false);
+    setEditingModule(null);
+    if (editDialogRef.current) editDialogRef.current.close();
+  };
 
-  const handleDeleteModule = (moduleId) => {
+  const handleModuleUpdated = () => {
+    window.location.reload();
+  };
+
+  const handleDeleteModule = async (moduleId) => {
     if (
       !window.confirm(
         "Are you sure you want to delete this module and all its lessons?"
       )
     )
       return;
-    setModulesState((prev) => prev.filter((m) => m.id !== moduleId));
-    setExpandedModules((prev) => {
-      const copy = { ...prev };
-      delete copy[moduleId];
-      return copy;
-    });
+
+    try {
+      // Call API to delete module - backend will verify user through JWT token
+      await courseModuleAPI.deleteModule(courseId, moduleId);
+      
+      // Update local state after successful deletion
+      setModulesState((prev) => prev.filter((m) => m.id !== moduleId));
+      setExpandedModules((prev) => {
+        const copy = { ...prev };
+        delete copy[moduleId];
+        return copy;
+      });
+
+      toast.success("Module deleted successfully");
+    } catch (error) {
+      console.error("Error deleting module:", error);
+      toast.error(error.response?.data?.message || "Failed to delete module");
+    }
   };
 
-  const moveModule = (moduleId, direction) => {
-    setModulesState((prev) => {
-      const idx = prev.findIndex((m) => m.id === moduleId);
-      if (idx < 0) return prev;
+  const moveModule = async (moduleId, direction) => {
+    try {
+      const idx = modulesState.findIndex((m) => m.id === moduleId);
+      if (idx < 0) return;
+      
       const swapIdx = direction === "up" ? idx - 1 : idx + 1;
-      if (swapIdx < 0 || swapIdx >= prev.length) return prev;
-      const newArr = [...prev];
-      [newArr[idx], newArr[swapIdx]] = [newArr[swapIdx], newArr[idx]];
-      return newArr;
-    });
+      if (swapIdx < 0 || swapIdx >= modulesState.length) return;
+
+      // Get the modules to swap
+      const currentModule = modulesState[idx];
+      const swapModule = modulesState[swapIdx];
+
+      // Update UI first for better user experience
+      setModulesState((prev) => {
+        const newArr = [...prev];
+        [newArr[idx], newArr[swapIdx]] = [newArr[swapIdx], newArr[idx]];
+        return newArr;
+      });
+
+      // Then update orders in the database
+      try {
+        await Promise.all([
+          courseModuleAPI.updateModuleOrder(courseId, currentModule.id, swapModule.order),
+          courseModuleAPI.updateModuleOrder(courseId, swapModule.id, currentModule.order)
+        ]);
+      } catch (error) {
+        // If API call fails, revert the UI change
+        setModulesState((prev) => {
+          const newArr = [...prev];
+          [newArr[idx], newArr[swapIdx]] = [newArr[swapIdx], newArr[idx]];
+          return newArr;
+        });
+        throw error;
+      }
+    } catch (error) {
+      console.error("Error updating module order:", error);
+      toast.error("Failed to update module order");
+    }
   };
 
  const handleEditLesson = (moduleId, lessonId) => {
@@ -249,72 +330,158 @@ export default function TeacherCourseDetail() {
    setLessonModalOpen(true);
  };
 
- // Delete inline
- const handleDeleteLesson = (moduleId, lessonId) => {
-   if (!confirm("Delete this lesson?")) return;
-   setModulesState(prev =>
-     prev.map(m =>
-       m.id === moduleId
-         ? { ...m, lessons: m.lessons.filter(l => l.id !== lessonId) }
-         : m
-     )
-   );
+ const handleDeleteLesson = async (moduleId, lessonId) => {
+   if (!window.confirm("Are you sure you want to delete this lesson?")) return;
+   
+   try {
+     await moduleLessonAPI.deleteLesson(courseId, moduleId, lessonId);
+     // Update local state after successful deletion
+     setModulesState(prev =>
+       prev.map(m =>
+         m.id === moduleId
+           ? { ...m, lessons: m.lessons.filter(l => l.id !== lessonId) }
+           : m
+       )
+     );
+     toast.success("Lesson deleted successfully");
+   } catch (error) {
+     console.error("Error deleting lesson:", error);
+     toast.error(error.response?.data?.message || "Failed to delete lesson");
+   }
  };
 
- // Called when the modal’s Save button is clicked
- const handleSaveLesson = updated => {
-   setModulesState(prev =>
-     prev.map(m =>
-       m.id !== updated.moduleId
-         ? m
-         : {
-             ...m,
-             lessons: m.lessons.map(l => (l.id === updated.id ? updated : l))
-           }
-     )
-   );
+ const handleSaveLesson = async (lessonData) => {
+   try {
+     console.log('Saving lesson data:', lessonData); // Debug log
+     
+     if (lessonData.id) {
+       // Update existing lesson
+       await moduleLessonAPI.updateLesson(
+         courseId,
+         lessonData.moduleId,
+         lessonData.id,
+         {
+           title: lessonData.title,
+           description: lessonData.description,
+           type: lessonData.type,
+           fileObject: lessonData.fileObject
+         }
+       );
+       toast.success("Lesson updated successfully");
+     } else {
+       // Create new lesson
+       await moduleLessonAPI.createLesson(courseId, currentModuleId, lessonData);
+       toast.success("Lesson created successfully");
+     }
+     // Reload page to get updated data
+     window.location.reload();
+   } catch (error) {
+     console.error("Error saving lesson:", error);
+     toast.error(error.response?.data?.message || "Failed to save lesson");
+   }
  };
 
 
-  const moveLesson = (moduleId, lessonId, direction) => {
-    setModulesState((prev) =>
-      prev.map((m) => {
-        if (m.id !== moduleId) return m;
-        const idx = m.lessons.findIndex((l) => l.id === lessonId);
-        if (idx < 0) return m;
-        const swapIdx = direction === "up" ? idx - 1 : idx + 1;
-        if (swapIdx < 0 || swapIdx >= m.lessons.length) return m;
-        const newLessons = [...m.lessons];
-        [newLessons[idx], newLessons[swapIdx]] = [
-          newLessons[swapIdx],
-          newLessons[idx]
-        ];
-        return { ...m, lessons: newLessons };
-      })
-    );
+  const moveLesson = async (moduleId, lessonId, direction) => {
+    try {
+      const mod = modulesState.find(m => m.id === moduleId);
+      if (!mod) return;
+      
+      const idx = mod.lessons.findIndex(l => l.id === lessonId);
+      if (idx < 0) return;
+      
+      const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= mod.lessons.length) return;
+
+      // Get the lessons to swap
+      const currentLesson = mod.lessons[idx];
+      const swapLesson = mod.lessons[swapIdx];
+
+      // Update UI first for better user experience
+      setModulesState(prev =>
+        prev.map(m => {
+          if (m.id !== moduleId) return m;
+          const newLessons = [...m.lessons];
+          [newLessons[idx], newLessons[swapIdx]] = [newLessons[swapIdx], newLessons[idx]];
+          return { ...m, lessons: newLessons };
+        })
+      );
+
+      // Then update orders in the database
+      try {
+        await Promise.all([
+          moduleLessonAPI.updateLessonOrder(courseId, moduleId, currentLesson.id, swapLesson.order),
+          moduleLessonAPI.updateLessonOrder(courseId, moduleId, swapLesson.id, currentLesson.order)
+        ]);
+      } catch (error) {
+        // If API call fails, revert the UI change
+        setModulesState(prev =>
+          prev.map(m => {
+            if (m.id !== moduleId) return m;
+            const newLessons = [...m.lessons];
+            [newLessons[idx], newLessons[swapIdx]] = [newLessons[swapIdx], newLessons[idx]];
+            return { ...m, lessons: newLessons };
+          })
+        );
+        throw error;
+      }
+    } catch (error) {
+      console.error("Error updating lesson order:", error);
+      toast.error("Failed to update lesson order");
+    }
   };
 
 
   //save about and details
-  const saveAbout = () => {
-    setCourse((prev) => ({ ...prev, description: draftDescription }));
-    setIsEditingAbout(false);
+  const saveAbout = async () => {
+    try {
+      // Build updated course data
+      const updatedCourse = {
+        ...course,
+        description: draftDescription.trim()
+      };
+
+      // Call API to update course
+      await courseAPI.updateCourse(course.id, updatedCourse);
+      
+      // Update local state
+      setCourse(updatedCourse);
+      setIsEditingAbout(false);
+      toast.success("Course description updated successfully");
+    } catch (error) {
+      console.error("Error updating course description:", error);
+      toast.error("Failed to update course description");
+    }
   };
 
-  const saveDetails = () => {
-    setCourse((prev) => ({
-      ...prev,
-      startDate: draftStartDate,
-      endDate: draftEndDate,
-      schedule: draftSchedule,
-      location: draftLocation
-    }));
-    setIsEditingDetails(false);
+  const saveDetails = async () => {
+    try {
+      // Build updated course data
+      const updatedCourse = {
+        ...course,
+        startDate: draftStartDate,
+        endDate: draftEndDate,
+        schedule: draftSchedule.trim(),
+        location: draftLocation.trim()
+      };
+
+      // Call API to update course
+      await courseAPI.updateCourse(course.id, updatedCourse);
+      
+      // Update local state
+      setCourse(updatedCourse);
+      setIsEditingDetails(false);
+      toast.success("Course details updated successfully");
+    } catch (error) {
+      console.error("Error updating course details:", error);
+      toast.error("Failed to update course details");
+    }
   };
 
   //navigation
-  const handleLessonClick = (lid) =>
-    navigate(`/teacher/courses/${courseId}/lessons/${lid}`);
+  const handleLessonClick = (lessonId, moduleId) => {
+    navigate(`/teacher/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`);
+  };
 
   const handleAssignmentClick = (aid, mode = "view") => {
     if (mode === "edit") {
@@ -368,6 +535,15 @@ export default function TeacherCourseDetail() {
     navigate(`/teacher/courses/${courseId}`, {
       state: { fromResource: { action: "delete", resource: { id: resId } } }
     });
+  };
+
+  const handleOpenAddLessonModal = (moduleId) => {
+    setCurrentModuleId(moduleId);
+    setShowAddLessonModal(true);
+  };
+  const handleCloseAddLessonModal = () => {
+    setShowAddLessonModal(false);
+    setCurrentModuleId(null);
   };
 
   if (loading) {
@@ -424,6 +600,8 @@ export default function TeacherCourseDetail() {
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);
 
+  console.log('modulesState:', modulesState);
+
   return (
     <div className="flex min-h-screen bg-[#f4f9fc]">
       <SideBarTeacher />
@@ -435,7 +613,9 @@ export default function TeacherCourseDetail() {
             {/*header*/}
             <div
               className="relative rounded-t-lg overflow-hidden h-64 bg-cover bg-center mb-6"
-              style={{ backgroundImage: `url(${course.image})` }}
+              style={{ 
+                backgroundImage: `url(${course.image || '/cover/placeholder-course.jpg'})` 
+              }}
             >
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               <div className="relative z-10 flex items-center gap-2 px-6 pt-4">
@@ -446,7 +626,7 @@ export default function TeacherCourseDetail() {
                   <ArrowLeft className="w-5 h-5" />
                 </Link>
                 <span
-                  className={`rounded-md ${course.categoryColor} px-2 py-1 text-xs font-bold text-white`}
+                  className={`rounded-md ${course.categoryColor ? ` ${course.categoryColor}` : ' bg-blue-500'} px-2 py-1 text-xs font-bold text-white`}
                 >
                   {course.category}
                 </span>
@@ -460,11 +640,13 @@ export default function TeacherCourseDetail() {
                     <div className="h-8 w-8 overflow-hidden rounded-full bg-white">
                       <img
                         src={course.instructorImage || "/placeholder.jpg"}
-                        alt={course.instructor}
+                        alt={course.instructorName || "Instructor"}
                         className="h-full w-full object-cover"
                       />
                     </div>
-                    <p className="text-sm font-medium">{course.instructor}</p>
+                    <p className="text-sm font-medium">
+                      {course.instructorName || "Unknown Instructor"}
+                    </p>
                   </div>
                   {isArchived && (
                     <div className="flex items-center gap-2 rounded-full bg-green-500/20 px-3 py-1 text-green-300 backdrop-blur-sm">
@@ -493,7 +675,9 @@ export default function TeacherCourseDetail() {
                     <EditableCourseHeader
                       course={course}
                       onUpdate={(updatedCourse) => {
+                        // Cập nhật state local với dữ liệu mới
                         setCourse(updatedCourse);
+                        // Đóng modal edit
                         setIsEditingHeader(false);
                       }}
                       onCancel={() => setIsEditingHeader(false)}
@@ -607,7 +791,7 @@ export default function TeacherCourseDetail() {
                                   Course Duration
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                  {course.startDate} - {course.endDate}
+                                  {course.startDate.split('T')[0]} - {course.endDate.split('T')[0]}
                                 </p>
                               </div>
                             </div>
@@ -860,6 +1044,15 @@ export default function TeacherCourseDetail() {
                               <ChevronRight className="h-5 w-5 text-gray-500" />
                             )}
                           </button>
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleOpenAddLessonModal(mod.id);
+                            }}
+                            className="flex items-center gap-1 rounded-full bg-blue-500 px-3 py-1 text-xs font-medium text-white hover:bg-blue-600 transition-colors shadow"
+                          >
+                            <span>+ Add Lesson</span>
+                          </button>
                         </div>
                       </div>
 
@@ -871,8 +1064,10 @@ export default function TeacherCourseDetail() {
                               className="flex items-center justify-between p-4 hover:bg-gray-50"
                             >
                               <div className="flex items-center gap-3">
-                              {lesson.fileObject?.type.startsWith("video/") ? (
+                              {lesson.type === "video" ? (
                                   <Play className="h-5 w-5 text-blue-500" />
+                                ) : lesson.type === "document" ? (
+                                  <FileText className="h-5 w-5 text-gray-500" />
                                 ) : (
                                   <FileText className="h-5 w-5 text-gray-500" />
                                 )}
@@ -880,7 +1075,7 @@ export default function TeacherCourseDetail() {
                                   <h4 className="font-medium">{lesson.title}</h4>
                                   {/* description: time for video, description text otherwise */}
                                   <p className="text-sm text-gray-500">
-                                    {lesson.fileObject?.type.startsWith("video/")
+                                    {lesson.type === "video"
                                       ? lesson.duration
                                       : lesson.description || "No description"}
                                   </p>
@@ -940,19 +1135,28 @@ export default function TeacherCourseDetail() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleLessonClick(lesson.id);
+                                      handleLessonClick(lesson.id, mod.id);
                                     }}
                                     className="rounded-lg bg-blue-500 px-3 py-1 text-xs font-medium text-white hover:bg-blue-600"
                                   >
-                                    {lesson.completed ? "Review" : "Start"}
+                                    Review
                                   </button>
                                 )}
                               </div>
                             </div>
                           ))}
                           {mod.lessons.length === 0 && (
-                            <div className="p-4 text-center text-sm text-gray-500">
-                              No lessons. Use the “+” icon above to add one.
+                            <div className="p-4 flex flex-col items-center justify-center gap-2">
+                              <span className="text-gray-500 text-sm mb-1">No lessons yet.</span>
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  handleOpenAddLessonModal(mod.id);
+                                }}
+                                className="flex items-center gap-1 rounded-full bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 transition-colors shadow"
+                              >
+                                <span>+ Add Lesson</span>
+                              </button>
                             </div>
                           )}
                         </div>
@@ -1472,9 +1676,48 @@ export default function TeacherCourseDetail() {
              onSave={handleSaveLesson}
            />
 
+        <dialog ref={editDialogRef} open={showEditModuleModal} className="rounded-lg p-0 border-none max-w-md w-full">
+          <AddModuleModal
+            open={showEditModuleModal}
+            onClose={handleCloseEditDialog}
+            courseId={courseId}
+            isEdit={true}
+            initialData={editingModule}
+            onModuleUpdated={handleModuleUpdated}
+          />
+        </dialog>
+
+        <dialog ref={dialogRef} open={showAddModuleModal} className="rounded-lg p-0 border-none max-w-md w-full">
+          <AddModuleModal
+            open={showAddModuleModal}
+            onClose={handleCloseDialog}
+            courseId={courseId}
+            onModuleAdded={handleModuleAdded}
+          />
+        </dialog>
+
+        <dialog open={showAddLessonModal} className="rounded-lg p-0 border-none max-w-md w-full">
+          <LessonModal
+            isOpen={showAddLessonModal}
+            onClose={handleCloseAddLessonModal}
+            initialData={{}}
+            onSave={async (updated) => {
+              if (!currentModuleId) return;
+              try {
+                await moduleLessonAPI.createLesson(courseId, currentModuleId, updated);
+                toast.success('Lesson created!');
+                window.location.reload();
+              } catch (err) {
+                toast.error(err.response?.data?.message || 'Failed to create lesson');
+              }
+            }}
+          />
+        </dialog>
+
     </div>
     </div>
   );
+}
 
 function InviteStudentModal({ inviteCode, onClose }) {
   const [email, setEmail] = useState("");
@@ -1552,4 +1795,4 @@ function InviteStudentModal({ inviteCode, onClose }) {
       </div>
     </div>
   );
-}}
+}

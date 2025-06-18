@@ -3,12 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import SideBarTeacher from "@/components/layout/SideBarTeacher";
 import NavBar from "@/components/layout/NavBar";
 import TeacherCourseCard from "@/components/features/course/teacher/TeacherCourseCard";
-
-import {
-  currentCourses as initialCurrent,
-  draftCourses as initialDrafts,
-  archivedCourses as staticArchived,
-} from "@/data/mock/teacherCourseData";
+import { courseAPI } from "@/api";
+import { toast } from "sonner";
 
 export default function TeacherCoursesPage() {
   const navigate = useNavigate();
@@ -17,23 +13,38 @@ export default function TeacherCoursesPage() {
   // ─── 1. Tabs: "teaching" | "drafts" | "archived"
   const [tab, setTab] = useState("teaching");
 
-  // ─── 2. Local state from mocks
-  const [current, setCurrent] = useState(initialCurrent);
-  const [drafts, setDrafts] = useState(initialDrafts);
-  const [archived, setArchived] = useState(staticArchived);
+  // ─── 2. Local state từ API
+  const [current, setCurrent] = useState([]);
+  const [drafts, setDrafts] = useState([]);
+  const [archived, setArchived] = useState([]);
 
-  // ─── 2a. Merge any incoming newCourse into drafts (once, no duplicates)
+  // ─── 2a. Fetch courses from backend
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const res = await courseAPI.getAllCourses();
+        // Nếu backend trả về { data: [...] }
+        const courses = res.data || res;
+        setCurrent(courses.filter(c => c.status === "current"));
+        setDrafts(courses.filter(c => c.status === "draft"));
+        setArchived(courses.filter(c => c.status === "archived"));
+      } catch (error) {
+        console.error("Failed to fetch courses:", error);
+      }
+    };
+    fetchCourses();
+  }, []);
+
+  // ─── 2b. Merge any incoming newCourse into drafts (once, no duplicates)
   useEffect(() => {
     const newCourse = location.state?.newCourse;
     if (newCourse) {
       setDrafts((prev) => {
-        // if already present, skip
         if (prev.some((c) => c.id === newCourse.id)) {
           return prev;
         }
         return [newCourse, ...prev];
       });
-      // clear navigation state so effect won't run again
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, navigate, location.pathname]);
@@ -59,13 +70,28 @@ export default function TeacherCoursesPage() {
     navigate(`/teacher/courses/${courseToEdit.id}/edit`);
   };
 
-  const handleArchive = (courseToArchive) => {
+  const handleArchive = async (courseToArchive) => {
     const confirmMsg = `Archive "${courseToArchive.title}"?`;
     if (!window.confirm(confirmMsg)) return;
 
-    setCurrent((prev) => prev.filter((c) => c.id !== courseToArchive.id));
-    setDrafts((prev) => prev.filter((c) => c.id !== courseToArchive.id));
-    setArchived((prev) => [courseToArchive, ...prev]);
+    try {
+      // Gọi API để cập nhật status của course
+      await courseAPI.updateCourse(courseToArchive.id, {
+        ...courseToArchive,
+        status: 'archived'
+      });
+
+      // Cập nhật state local sau khi API thành công
+      setCurrent((prev) => prev.filter((c) => c.id !== courseToArchive.id));
+      setDrafts((prev) => prev.filter((c) => c.id !== courseToArchive.id));
+      setArchived((prev) => [courseToArchive, ...prev]);
+
+      // Thông báo thành công
+      toast.success("Course archived successfully");
+    } catch (error) {
+      console.error("Error archiving course:", error);
+      toast.error("Failed to archive course");
+    }
   };
 
   return (
@@ -81,16 +107,11 @@ export default function TeacherCoursesPage() {
             <div className="flex flex-col gap-6">
               <div className="flex flex-wrap justify-between items-center gap-2">
                 <h1 className="text-2xl font-bold text-[#303345]">Courses</h1>
-                <button
-                  onClick={handleCreate}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium"
-                >
-                  Create New Course
-                </button>
               </div>
 
               {/* TABS */}
-              <div className="flex gap-2">
+              <div className="mb-8 flex">
+                <div className="inline-flex gap-2 rounded-lg border bg-white p-1 shadow-sm">
                 <button
                   onClick={() => setTab("teaching")}
                   className={`rounded-md px-3 py-1.5 text-sm font-medium ${
@@ -120,6 +141,14 @@ export default function TeacherCoursesPage() {
                   }`}
                 >
                   Archived
+                </button>
+                </div>
+
+                <button
+                  onClick={handleCreate}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium ml-auto"
+                >
+                  Create New Course
                 </button>
               </div>
 

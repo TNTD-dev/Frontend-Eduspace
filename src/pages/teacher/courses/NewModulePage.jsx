@@ -14,6 +14,9 @@ import {
   List,
   Link as LinkIcon
 } from 'lucide-react';
+import { courseModuleAPI } from '@/api';
+import { moduleLessonAPI } from '@/api';
+import { toast } from 'sonner';
 
 export default function NewModulePage() {
   const { courseId } = useParams();
@@ -23,6 +26,7 @@ export default function NewModulePage() {
   const [moduleTitle, setModuleTitle] = useState('');
   const [moduleDescription, setModuleDescription] = useState('');
   const [lessons, setLessons] = useState([]);
+  const [moduleId, setModuleId] = useState(null);
 
   const editorRef = useRef(null);
 
@@ -48,17 +52,79 @@ export default function NewModulePage() {
     setLessons(prev => prev.map(l => (l.id === id ? { ...l, [field]: value } : l)));
   const handleMaterialChange = (id, file) => handleLessonChange(id, 'material', file);
   const handleDeleteLesson = id => setLessons(prev => prev.filter(l => l.id !== id));
-  const handleNext = () => setStep(2);
+  const handleNext = async () => {
+    try {
+      // Validate required fields
+      if (!moduleTitle.trim()) {
+        toast.error("Please enter module title");
+        return;
+      }
+
+      if (!moduleDescription.trim()) {
+        toast.error("Please enter module description");
+        return;
+      }
+
+      console.log("Creating module with data:", {
+        courseId,
+        title: moduleTitle.trim(),
+        description: moduleDescription.trim()
+      });
+
+      // Create module first
+      const moduleResponse = await courseModuleAPI.createModule(courseId, {
+        title: moduleTitle.trim(),
+        description: moduleDescription.trim()
+      });
+
+      console.log("Module response:", moduleResponse);
+
+      if (!moduleResponse) {
+        throw new Error("Failed to create module");
+      }
+
+      // Store moduleId for later use
+      setModuleId(moduleResponse.id);
+      setStep(2);
+    } catch (error) {
+      console.error("Error creating module:", error);
+      toast.error(error.response?.data?.message || "Failed to create module");
+    }
+  };
   const handleBack = () => setStep(1);
 
-  const handleSave = () => {
-    const newModule = {
-      id: Date.now(),
-      title: moduleTitle.trim(),
-      description: moduleDescription.trim(),
-      lessons
-    };
-    navigate(`/teacher/courses/${courseId}`, { state: { fromModule: newModule } });
+  const handleSave = async () => {
+    try {
+      if (!moduleId) {
+        toast.error("Module not created");
+        return;
+      }
+
+      // Create lessons if any
+      if (lessons.length > 0) {
+        const lessonPromises = lessons.map(lesson => 
+          moduleLessonAPI.createLesson(courseId, moduleId, {
+            title: lesson.title.trim(),
+            duration: lesson.duration.trim(),
+            contentURL: lesson.material ? URL.createObjectURL(lesson.material) : null,
+            contentData: lesson.material ? lesson.material.name : null,
+            type: lesson.material ? lesson.material.type : 'text'
+          })
+        );
+
+        await Promise.all(lessonPromises);
+      }
+
+      toast.success("Module created successfully");
+      navigate(`/teacher/courses/${courseId}`, { 
+        state: { 
+          fromModule: { id: moduleId, title: moduleTitle, description: moduleDescription }
+        } 
+      });
+    } catch (error) {
+      console.error("Error creating lessons:", error);
+      toast.error(error.response?.data?.message || "Failed to create lessons");
+    }
   };
   const handleCancel = () => navigate(`/teacher/courses/${courseId}`);
 
